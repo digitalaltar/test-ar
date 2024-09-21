@@ -3,32 +3,40 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>MindAR.js Video on Image Marker</title>
+  <title>MindAR.js Video on Marker</title>
   <style>
     body { margin: 0; overflow: hidden; }
-    #mindar-container { width: 100vw; height: 100vh; }
+    #mindar-container { width: 100vw; height: 100vh; position: fixed; top: 0; left: 0; }
   </style>
-  <!-- Three.js and MindAR.js Libraries -->
-  <script src="https://cdn.jsdelivr.net/npm/three@0.135.0/build/three.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/mind-ar@0.5.1/dist/mindar.js"></script>
+  <!-- Import map for dependencies -->
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+        "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/",
+        "mindar-image-three":"https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-three.prod.js"
+      }
+    }
+  </script>
 </head>
 <body>
   <div id="mindar-container"></div>
 
   <script type="module">
-    import { MindARThree } from 'https://cdn.jsdelivr.net/gh/MindAR-js/three@0.2.0/dist/mindar.js';
+    import * as THREE from 'three';
+    import { MindARThree } from 'mindar-image-three';
 
+    // Initialize MindARThree with the container and marker file
     const mindarThree = new MindARThree({
       container: document.querySelector("#mindar-container"),
-      imageTargetSrc: 'targets.mind', // Path to the image marker target
+      imageTargetSrc: 'targets.mind', // Replace with your .mind marker file
     });
 
     const { renderer, scene, camera } = mindarThree;
 
     // Load the video
     const video = document.createElement('video');
-    video.src = 'video.mp4'; // Path to your video
-    video.crossOrigin = 'anonymous';
+    video.src = 'video.mp4'; // Replace with your video file path
     video.loop = true;
     video.muted = true;
     video.autoplay = false;
@@ -42,9 +50,10 @@
     const anchor = mindarThree.addAnchor(0);
     anchor.group.add(plane);
 
-    // Start MindAR and Render
+    // Start the MindAR scene
     mindarThree.start();
 
+    // Render the scene
     renderer.setAnimationLoop(() => {
       renderer.render(scene, camera);
     });
@@ -54,7 +63,7 @@
       video.play();
     };
 
-    // Stop video when marker is lost
+    // Pause video when marker is lost
     anchor.onTargetLost = () => {
       video.pause();
     };
