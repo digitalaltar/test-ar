@@ -7,24 +7,21 @@
   <!-- A-Frame Library -->
   <script src="https://aframe.io/releases/1.2.0/aframe.min.js"></script>
   <!-- AR.js for A-Frame -->
-  <script src="https://cdn.rawgit.com/jeromeetienne/AR.js/1.6.1/aframe/build/aframe-ar.js"></script>
+  <script src="https://cdn.jsdelivr.net/gh/AR-js-org/AR.js/aframe/build/aframe-ar.min.js"></script>
 </head>
 <body style="margin: 0; overflow: hidden;">
   <!-- A-Frame AR Scene -->
   <a-scene embedded arjs>
-    
     <!-- The marker trigger, linked to the .patt file -->
     <a-marker type="pattern" url="marker.patt">
-      
       <!-- The video that will play when the marker is detected -->
       <a-video src="#video" width="3" height="2" position="0 1 0"></a-video>
-    
     </a-marker>
 
     <!-- Assets for the video -->
     <a-assets>
       <!-- Autoplay and loop the video, replace 'your-video.mp4' with your file path -->
-      <video id="video" autoplay loop="true" src="video.mp4" crossorigin="anonymous"></video>
+      <video id="video" autoplay loop="true" src="your-video.mp4" crossorigin="anonymous"></video>
     </a-assets>
 
     <!-- AR.js default camera setup -->
