@@ -6,26 +6,25 @@
   <title>AR Video Example</title>
   <!-- A-Frame Library -->
   <script src="https://aframe.io/releases/1.2.0/aframe.min.js"></script>
-  <!-- AR.js for A-Frame -->
+  <!-- AR.js Stable Version -->
   <script src="https://cdn.jsdelivr.net/gh/AR-js-org/AR.js@3.3.2/aframe/build/aframe-ar.min.js"></script>
 </head>
 <body style="margin: 0; overflow: hidden;">
   <!-- A-Frame AR Scene -->
   <a-scene embedded arjs>
-    <!-- The marker trigger, linked to the .patt file -->
-      <a-marker type="pattern" url="marker.patt">
-        <a-video src="#video" width="3" height="2" position="0 1 0"></a-video>
-      </a-marker>
+    <!-- Marker with the link to your .patt file -->
+    <a-marker type="pattern" url="marker.patt">
+      <!-- The video to be displayed on marker detection -->
+      <a-video src="#video" width="3" height="2" position="0 1 0"></a-video>
+    </a-marker>
 
-    <!-- Assets for the video -->
-    <a-assets>
-      <!-- Autoplay and loop the video, replace 'your-video.mp4' with your file path -->
+    <!-- Assets with increased timeout for the video -->
+    <a-assets timeout="10000"> <!-- Set timeout to 10 seconds -->
       <video id="video" autoplay loop="true" src="video.mp4" crossorigin="anonymous"></video>
     </a-assets>
 
-    <!-- AR.js default camera setup -->
+    <!-- Default AR.js camera setup -->
     <a-entity camera></a-entity>
-
   </a-scene>
 </body>
 </html>
