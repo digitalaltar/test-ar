@@ -3,31 +3,32 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>AR Video Example</title>
+  <title>AR.js Basic Example</title>
   <!-- A-Frame Library -->
   <script src="https://aframe.io/releases/1.2.0/aframe.min.js"></script>
-  <!-- Latest AR.js Stable Version -->
+  <!-- AR.js for A-Frame -->
   <script src="https://cdn.jsdelivr.net/gh/AR-js-org/AR.js@3.3.2/aframe/build/aframe-ar.min.js"></script>
 </head>
 <body style="margin: 0; overflow: hidden;">
-  <!-- A-Frame AR Scene -->
-  <a-scene embedded arjs="trackingMethod: best; sourceType: webcam; debugUIEnabled: false;">
+  
+  <!-- A-Frame Scene -->
+  <a-scene embedded arjs="sourceType: webcam; debugUIEnabled: false;">
     
-    <!-- Marker detection with pattern and minimum confidence level -->
-    <a-marker type="pattern" url="marker.patt" minConfidence="0.6">
-      <!-- Video to be displayed when marker is detected -->
+    <!-- Marker with the link to your .patt file -->
+    <a-marker type="pattern" url="marker.patt">
+      <!-- The video that will play when the marker is detected -->
       <a-video src="#video" width="3" height="2" position="0 1 0"></a-video>
     </a-marker>
 
-    <!-- Asset section with increased timeout -->
-    <a-assets timeout="10000">
-      <!-- Your video asset -->
+    <!-- Assets: Video File -->
+    <a-assets>
       <video id="video" autoplay loop="true" src="video.mp4" crossorigin="anonymous"></video>
     </a-assets>
 
-    <!-- Default AR.js camera setup -->
+    <!-- AR.js Camera -->
     <a-entity camera></a-entity>
 
   </a-scene>
+
 </body>
 </html>
