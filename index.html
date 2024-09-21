@@ -59,27 +59,26 @@
     const anchor = mindarThree.addAnchor(0);
     anchor.group.add(plane);
 
-    // Start the MindAR scene
-    mindarThree.start();
+    // Add error handling and callbacks to start MindAR.js
+    mindarThree.start().then(() => {
+      console.log("AR session started");
 
-    // Render the scene
-    renderer.setAnimationLoop(() => {
-      renderer.render(scene, camera);
-    });
+      // Render the scene once the AR session starts
+      renderer.setAnimationLoop(() => {
+        renderer.render(scene, camera);
+      });
 
-    // Play video when marker is detected
-    anchor.onTargetFound = () => {
-      video.play(); // Force the video to play when the marker is detected
-    };
+      // Play video when marker is detected
+      anchor.onTargetFound = () => {
+        video.play(); // Force the video to play when the marker is detected
+      };
 
-    // Pause video when marker is lost
-    anchor.onTargetLost = () => {
-      video.pause();
-    };
-
-    // Add a user interaction listener to ensure the video can play
-    document.body.addEventListener('click', () => {
-      video.play();
+      // Pause video when marker is lost
+      anchor.onTargetLost = () => {
+        video.pause();
+      };
+    }).catch((error) => {
+      console.error("Failed to start AR session:", error);
     });
   </script>
 </body>
