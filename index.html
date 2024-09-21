@@ -34,14 +34,23 @@
 
     const { renderer, scene, camera } = mindarThree;
 
-    // Load the video
+    // Load the video element
     const video = document.createElement('video');
     video.src = 'video2.mp4'; // Replace with your video file path
     video.loop = true;
     video.muted = true;
-    video.autoplay = false;
+    video.playsInline = true; // Ensure it plays inline on mobile browsers
+    video.crossOrigin = "anonymous"; // Handle CORS issues if needed
 
+    // Preload the video
+    video.load(); // Preload the video for smoother playback
+
+    // Create a texture from the video
     const texture = new THREE.VideoTexture(video);
+    texture.minFilter = THREE.LinearFilter;
+    texture.magFilter = THREE.LinearFilter;
+    texture.format = THREE.RGBAFormat;
+
     const geometry = new THREE.PlaneGeometry(1, 0.75); // Adjust to fit your scene
     const material = new THREE.MeshBasicMaterial({ map: texture });
     const plane = new THREE.Mesh(geometry, material);
@@ -60,13 +69,18 @@
 
     // Play video when marker is detected
     anchor.onTargetFound = () => {
-      video.play();
+      video.play(); // Force the video to play when the marker is detected
     };
 
     // Pause video when marker is lost
     anchor.onTargetLost = () => {
       video.pause();
     };
+
+    // Add a user interaction listener to ensure the video can play
+    document.body.addEventListener('click', () => {
+      video.play();
+    });
   </script>
 </body>
 </html>
