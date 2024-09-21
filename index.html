@@ -3,32 +3,61 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>AR.js Basic Example</title>
-  <!-- A-Frame Library -->
-  <script src="https://aframe.io/releases/1.2.0/aframe.min.js"></script>
-  <!-- AR.js for A-Frame -->
-  <script src="https://cdn.jsdelivr.net/gh/AR-js-org/AR.js@3.3.2/aframe/build/aframe-ar.min.js"></script>
+  <title>MindAR.js Video on Image Marker</title>
+  <style>
+    body { margin: 0; overflow: hidden; }
+    #mindar-container { width: 100vw; height: 100vh; }
+  </style>
+  <!-- Three.js and MindAR.js Libraries -->
+  <script src="https://cdn.jsdelivr.net/npm/three@0.135.0/build/three.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/gh/MindAR-js/three@0.2.0/dist/mindar.js"></script>
 </head>
-<body style="margin: 0; overflow: hidden;">
-  
-  <!-- A-Frame Scene -->
-  <a-scene embedded arjs="sourceType: webcam; debugUIEnabled: false;">
-    
-    <!-- Marker with the link to your .patt file -->
-    <a-marker type="pattern" url="marker.patt">
-      <!-- The video that will play when the marker is detected -->
-      <a-video src="#video" width="3" height="2" position="0 1 0"></a-video>
-    </a-marker>
+<body>
+  <div id="mindar-container"></div>
 
-    <!-- Assets: Video File -->
-    <a-assets timeout="10000">
-      <video id="video" autoplay loop="true" src="video2.mp4" crossorigin="anonymous"></video>
-    </a-assets>
+  <script type="module">
+    import { MindARThree } from 'https://cdn.jsdelivr.net/gh/MindAR-js/three@0.2.0/dist/mindar.js';
 
-    <!-- AR.js Camera -->
-    <a-entity camera></a-entity>
+    const mindarThree = new MindARThree({
+      container: document.querySelector("#mindar-container"),
+      imageTargetSrc: 'targets.mind', // Path to the image marker target
+    });
 
-  </a-scene>
+    const { renderer, scene, camera } = mindarThree;
 
+    // Load the video
+    const video = document.createElement('video');
+    video.src = 'video.mp4'; // Path to your video
+    video.crossOrigin = 'anonymous';
+    video.loop = true;
+    video.muted = true;
+    video.autoplay = false;
+
+    const texture = new THREE.VideoTexture(video);
+    const geometry = new THREE.PlaneGeometry(1, 0.75); // Adjust to fit your scene
+    const material = new THREE.MeshBasicMaterial({ map: texture });
+    const plane = new THREE.Mesh(geometry, material);
+    plane.position.set(0, 0, 0);
+
+    const anchor = mindarThree.addAnchor(0);
+    anchor.group.add(plane);
+
+    // Start MindAR and Render
+    mindarThree.start();
+
+    renderer.setAnimationLoop(() => {
+      renderer.render(scene, camera);
+    });
+
+    // Play video when marker is detected
+    anchor.onTargetFound = () => {
+      video.play();
+    };
+
+    // Stop video when marker is lost
+    anchor.onTargetLost = () => {
+      video.pause();
+    };
+  </script>
 </body>
 </html>
