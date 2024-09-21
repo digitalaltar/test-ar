@@ -42,6 +42,15 @@
     video.playsInline = true; // Ensure it plays inline on mobile browsers
     video.crossOrigin = "anonymous"; // Handle CORS issues if needed
 
+    // Add a basic check to ensure the video is loading
+    video.onerror = () => {
+      console.error('Failed to load video. Check the format or path.');
+    };
+
+    video.oncanplay = () => {
+      console.log('Video is ready to play!');
+    };
+
     // Preload the video
     video.load(); // Preload the video for smoother playback
 
