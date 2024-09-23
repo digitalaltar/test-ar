@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>MindAR.js Multiple Markers in Same AR Session</title>
+  <title>MindAR.js Multiple Markers in One .mind File</title>
   <style>
     body { margin: 0; overflow: hidden; }
     #mindar-container { width: 100vw; height: 100vh; position: fixed; top: 0; left: 0; }
@@ -34,55 +34,51 @@
     video.muted = true;
     video.playsInline = true;
     video.crossOrigin = "anonymous";
-    video.load(); 
+    video.load();
 
     const texture = new THREE.VideoTexture(video);
     const aspectRatio = videoWidth / videoHeight;
-    const planeWidth = 1; // Adjust scale if needed
+    const planeWidth = 1;
     const planeHeight = planeWidth / aspectRatio;
 
-    // Set the material with dynamic opacity from JSON
     const geometry = new THREE.PlaneGeometry(planeWidth, planeHeight);
     const material = new THREE.MeshBasicMaterial({
       map: texture,
       transparent: true,
-      opacity: opacityValue // Use the opacity value from the JSON
+      opacity: opacityValue
     });
 
-    const plane = new THREE.Mesh(geometry, material);
-    return { plane, video };
+    return { plane: new THREE.Mesh(geometry, material), video };
   }
 
-  // Load the JSON file with multiple .mind files and videos
+  // Load the JSON file with video settings for each marker
   fetch('media.json') // Update with your correct JSON file path
     .then(response => response.json())
     .then(jsonData => {
-      const markerRoot = jsonData.markerRoot;  // Root for markers
+      const mindFile = jsonData.mindFile;  // Single combined .mind file
       const videoRoot = jsonData.videoRoot;    // Root for videos
       const mediaData = jsonData.media;        // Media array
 
       // Initialize a single MindARThree instance for the entire AR session
       const mindarThree = new MindARThree({
         container: document.querySelector("#mindar-container"),
-        imageTargetSrc: mediaData.map(entry => markerRoot + entry.marker) // Pass an array of .mind files
+        imageTargetSrc: mindFile  // Use the combined .mind file
       });
 
       const { renderer, scene, camera } = mindarThree;
 
-      // Wait until the AR session is ready
       mindarThree.start().then(() => {
         mediaData.forEach((entry, index) => {
-          const videoSrc = videoRoot + entry.video;  // Video file path
+          const videoSrc = videoRoot + entry.video;
           const videoWidth = entry.width;
           const videoHeight = entry.height;
-          const opacityValue = entry.opacity;       // Opacity value from JSON
+          const opacityValue = entry.opacity;
 
-          // Add anchor for each image marker using its index from the `.mind` files
+          // Add anchor for each image marker using its index in the combined .mind file
           const anchor = mindarThree.addAnchor(index);
 
           // Create video plane
           const { plane, video } = createVideoPlane(videoSrc, videoWidth, videoHeight, opacityValue);
-
           anchor.group.add(plane);
 
           // Play video when the marker is detected
@@ -100,7 +96,7 @@
         renderer.setAnimationLoop(() => {
           renderer.render(scene, camera);
         });
-      }).catch((error) => {
+      }).catch(error => {
         console.error("Failed to start AR session:", error);
       });
     })

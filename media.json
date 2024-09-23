@@ -1,20 +1,24 @@
 {
-  "markerRoot": "markers/", 
+  "mindFile": "targets.mind",  // Specify the combined .mind file here
   "videoRoot": "videos/",
   "media": [
     {
       "video": "video1.mp4",
-      "marker": "targets1.mind",
       "width": 1024,
       "height": 1024,
       "opacity": 0.8
     },
     {
       "video": "video2.mp4",
-      "marker": "targets2.mind",
       "width": 1024,
       "height": 1024,
       "opacity": 0.5
+    },
+    {
+      "video": "video3.mp4",
+      "width": 1024,
+      "height": 1024,
+      "opacity": 0.9
     }
   ]
 }
