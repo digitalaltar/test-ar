@@ -1,15 +1,17 @@
 {
-  "mindFile": "targets.mind", 
+  "markerRoot": "markers/", 
   "videoRoot": "videos/",
   "media": [
     {
       "video": "video1.mp4",
+      "marker": "targets1.mind",
       "width": 1024,
       "height": 1024,
       "opacity": 0.8
     },
     {
       "video": "video2.mp4",
+      "marker": "targets2.mind",
       "width": 1024,
       "height": 1024,
       "opacity": 0.5
