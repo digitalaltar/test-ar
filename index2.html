@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MindAR.js Multiple Markers in One .mind File</title>
+  <style>
+    body { margin: 0; overflow: hidden; }
+    #mindar-container { width: 100vw; height: 100vh; position: fixed; top: 0; left: 0; }
+  </style>
+  <!-- Import map for dependencies -->
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+        "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/",
+        "mindar-image-three": "https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-three.prod.js"
+      }
+    }
+  </script>
+</head>
+<body>
+<div id="mindar-container"></div>
+
+<script type="module">
+  import * as THREE from 'three';
+  import { MindARThree } from 'mindar-image-three';
+
+  // With this new function
+  function createHolographicVideoPlane(videoSrc, videoWidth, videoHeight) {
+    const video = document.createElement('video');
+    video.src = videoSrc;
+    video.loop = true;
+    video.muted = true;
+    video.playsInline = true;
+    video.crossOrigin = "anonymous";
+    video.load();
+
+    const texture = new THREE.VideoTexture(video);
+    const aspectRatio = videoWidth / videoHeight;
+    const planeWidth = 1;
+    const planeHeight = planeWidth / aspectRatio;
+
+    const geometry = new THREE.PlaneGeometry(planeWidth, planeHeight);
+
+    // Holographic shader
+    const vertexShader = `
+      varying vec3 vNormal;
+      void main() {
+        vNormal = normalize(normalMatrix * normal);
+        gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+      }
+    `;
+
+    const fragmentShader = `
+      uniform sampler2D texture;
+      varying vec3 vNormal;
+      void main() {
+        float intensity = pow(0.9 - dot(vNormal, vec3(0.0, 0.0, 1.0)), 2.0);
+        vec4 texColor = texture2D(texture, uv);
+        gl_FragColor = vec4(texColor.rgb + vec3(0.1, 0.5, 1.0) * intensity, texColor.a * 0.8);
+      }
+    `;
+
+    const material = new THREE.ShaderMaterial({
+      vertexShader: vertexShader,
+      fragmentShader: fragmentShader,
+      uniforms: {
+        texture: { value: texture },
+      },
+      transparent: true,
+    });
+
+    return { plane: new THREE.Mesh(geometry, material), video };
+  }
+
+  // Load the JSON file with video settings for each marker
+  fetch('media.json') // Update with your correct JSON file path
+    .then(response => response.json())
+    .then(jsonData => {
+      const mindFile = jsonData.mindFile;  // Single combined .mind file
+      const videoRoot = jsonData.videoRoot;    // Root for videos
+      const mediaData = jsonData.media;        // Media array
+
+      // Initialize a single MindARThree instance for the entire AR session
+      const mindarThree = new MindARThree({
+        container: document.querySelector("#mindar-container"),
+        imageTargetSrc: mindFile  // Use the combined .mind file
+      });
+
+      const { renderer, scene, camera } = mindarThree;
+
+      mindarThree.start().then(() => {
+
+        const ambientLight = new THREE.AmbientLight(0x404040);
+        scene.add(ambientLight);
+
+        const pointLight = new THREE.PointLight(0xffffff, 1, 100);
+        pointLight.position.set(5, 5, 5);
+        scene.add(pointLight);
+
+        mediaData.forEach((entry, index) => {
+          const videoSrc = videoRoot + entry.video;
+          const videoWidth = entry.width;
+          const videoHeight = entry.height;
+          const opacityValue = entry.opacity;
+
+          // Add anchor for each image marker using its index in the combined .mind file
+          const anchor = mindarThree.addAnchor(index);
+
+          // Create video plane
+          const { plane, video } = createHolographicVideoPlane(videoSrc, videoWidth, videoHeight);
+          anchor.group.add(plane);
+
+          // Play video when the marker is detected
+          anchor.onTargetFound = () => {
+            video.play();
+          };
+
+          // Pause video when the marker is lost
+          anchor.onTargetLost = () => {
+            video.pause();
+          };
+        });
+
+        // Start rendering the AR scene
+        renderer.setAnimationLoop(() => {
+          renderer.render(scene, camera);
+        });
+      }).catch(error => {
+        console.error("Failed to start AR session:", error);
+      });
+    })
+    .catch(error => {
+      console.error('Failed to load JSON:', error);
+    });
+</script>
+</body>
+</html>
