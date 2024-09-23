@@ -35,7 +35,7 @@
   const ChromaticAberrationShader = {
     uniforms: {
       tDiffuse: { value: null },
-      amount: { value: 0.1 }, // Increase the amount for a stronger shift
+      amount: { value: 0.05 }, // Increase the amount for a stronger shift
     },
     vertexShader: `
       varying vec2 vUv;
@@ -133,7 +133,7 @@
 
         // Add chromatic aberration as a post-processing pass
         const chromaticAberrationPass = new ShaderPass(ChromaticAberrationShader);
-        chromaticAberrationPass.uniforms['amount'].value = 0.1; // Adjust intensity
+        chromaticAberrationPass.uniforms['amount'].value = 0.05; // Adjust intensity
         composer.addPass(chromaticAberrationPass);
 
         // Add the media data and anchors
