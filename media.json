@@ -6,13 +6,15 @@
       "video": "video-astronaut.mp4",
       "width": 1024,
       "height": 1024,
-      "opacity": 0.8
+      "opacity": 0.8,
+      "applyChromaticAberration": true
     },
     {
       "video": "video-cartoons.mp4",
       "width": 1024,
       "height": 1024,
-      "opacity": 0.5
+      "opacity": 0.5,
+      "applyChromaticAberration": true
     }
   ]
 }

@@ -3,165 +3,98 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>MindAR.js with Chromatic Aberration</title>
+  <title>MindAR.js Video on Marker</title>
   <style>
-    body { 
-      margin: 0; 
-      overflow: hidden;
-    }
-    #mindar-container { 
-      width: 100%;
-      height: 100%;
-      position: absolute; 
-      top: 0;
-      left: 0;
-    }
+    body { margin: 0; overflow: hidden; }
+    #mindar-container { width: 100vw; height: 100vh; position: fixed; top: 0; left: 0; }
   </style>
+  <!-- Import map for dependencies -->
   <script type="importmap">
     {
       "imports": {
         "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
         "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/",
-        "mindar-image-three": "https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-three.prod.js"
+        "mindar-image-three":"https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-three.prod.js"
       }
     }
   </script>
 </head>
 <body>
-<div id="mindar-container"></div>
+  <div id="mindar-container"></div>
 
-<script type="module">
+  <script type="module">
   import * as THREE from 'three';
   import { MindARThree } from 'mindar-image-three';
-  import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
-  import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
-  import { ShaderPass } from 'three/addons/postprocessing/ShaderPass.js';
 
-  // Custom Chromatic Aberration Shader
-  const ChromaticAberrationShader = {
-    uniforms: {
-      tDiffuse: { value: null },
-      amount: { value: 0.02 }, // Global effect amount
-      time: { value: 0 }
-    },
-    vertexShader: `
-      varying vec2 vUv;
-      void main() {
-        vUv = uv;
-        gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
-      }
-    `,
-    fragmentShader: `
-      uniform sampler2D tDiffuse;
-      uniform float amount;
-      uniform float time;
-      varying vec2 vUv;
+  // Initialize MindARThree with the container and marker file
+  const mindarThree = new MindARThree({
+    container: document.querySelector("#mindar-container"),
+    imageTargetSrc: 'targets.mind', // Replace with your .mind marker file
+  });
 
-      void main() {
-        vec2 redOffset = amount * vec2(sin(time * 2.0), cos(time * 2.0));
-        vec2 greenOffset = amount * vec2(sin(time + 2.0), cos(time + 2.0));
-        vec2 blueOffset = amount * vec2(sin(time + 4.0), cos(time + 4.0));
+  const { renderer, scene, camera } = mindarThree;
 
-        vec4 cr = texture2D(tDiffuse, vUv + redOffset);
-        vec4 cg = texture2D(tDiffuse, vUv);
-        vec4 cb = texture2D(tDiffuse, vUv - blueOffset);
+  // Load the video element
+  const video = document.createElement('video');
+  video.src = 'video.mp4'; // Replace with your video file path
+  video.loop = true;
+  video.muted = true;
+  video.playsInline = true;
+  video.crossOrigin = "anonymous"; 
 
-        gl_FragColor = vec4(cr.r, cg.g, cb.b, cg.a);
-      }
-    `
+  video.onerror = () => {
+    console.error('Failed to load video.');
   };
 
-  function createVideoPlane(videoSrc, videoWidth, videoHeight, opacity) {
-    const video = document.createElement('video');
-    video.src = videoSrc;
-    video.loop = true;
-    video.muted = true;
-    video.playsInline = true;
-    video.crossOrigin = "anonymous";
-    video.load();
+  video.oncanplay = () => {
+    console.log('Video is ready to play!');
+  };
 
-    video.addEventListener('canplay', () => {
+  // Preload the video
+  video.load(); 
+
+  // Create a texture from the video
+  const texture = new THREE.VideoTexture(video);
+  texture.minFilter = THREE.LinearFilter;
+  texture.magFilter = THREE.LinearFilter;
+  texture.format = THREE.RGBAFormat;
+
+  // Video dimensions (replace with your actual video resolution)
+  const videoWidth = 1920;
+  const videoHeight = 1080;
+
+  // Calculate aspect ratio and set plane dimensions
+  const aspectRatio = videoWidth / videoHeight;
+  const planeWidth = 1; // Adjust scale if needed
+  const planeHeight = planeWidth / aspectRatio;
+
+  const geometry = new THREE.PlaneGeometry(planeWidth, planeHeight);
+  const material = new THREE.MeshBasicMaterial({ map: texture });
+  const plane = new THREE.Mesh(geometry, material);
+  plane.position.set(0, 0, 0);
+
+  const anchor = mindarThree.addAnchor(0);
+  anchor.group.add(plane);
+
+  // Start MindAR and render the scene
+  mindarThree.start().then(() => {
+    renderer.setAnimationLoop(() => {
+      renderer.render(scene, camera);
+    });
+
+    // Play the video when the marker is detected
+    anchor.onTargetFound = () => {
       video.play();
-    });
+    };
 
-    const texture = new THREE.VideoTexture(video);
-    const aspectRatio = videoWidth / videoHeight;
-    const planeWidth = 1;
-    const planeHeight = planeWidth / aspectRatio;
-
-    const geometry = new THREE.PlaneGeometry(planeWidth, planeHeight);
-    const material = new THREE.MeshBasicMaterial({
-      map: texture,
-      transparent: true,
-      opacity: opacity,
-    });
-
-    return { plane: new THREE.Mesh(geometry, material), video };
-  }
-
-  fetch('media.json')
-    .then(response => response.json())
-    .then(jsonData => {
-      const mindFile = jsonData.mindFile;
-      const videoRoot = jsonData.videoRoot;
-      const mediaData = jsonData.media;
-
-      const mindarThree = new MindARThree({
-        container: document.querySelector("#mindar-container"),
-        imageTargetSrc: mindFile
-      });
-
-      mindarThree.start().then(() => {
-        const { renderer, scene, camera } = mindarThree;
-
-        renderer.setClearColor(0x000000, 0);
-
-        const ambientLight = new THREE.AmbientLight(0xffffff, 2);
-        scene.add(ambientLight);
-
-        const pointLight = new THREE.PointLight(0xffffff, 1, 100);
-        pointLight.position.set(5, 5, 5);
-        scene.add(pointLight);
-
-        const composer = new EffectComposer(renderer);
-        composer.addPass(new RenderPass(scene, camera));
-
-        const chromaticAberrationPass = new ShaderPass(ChromaticAberrationShader);
-        composer.addPass(chromaticAberrationPass);
-
-        mediaData.forEach((entry, index) => {
-          const videoSrc = videoRoot + entry.video;
-          const videoWidth = entry.width;
-          const videoHeight = entry.height;
-          const opacity = entry.opacity;
-
-          const anchor = mindarThree.addAnchor(index);
-
-          const { plane, video } = createVideoPlane(videoSrc, videoWidth, videoHeight, opacity);
-          anchor.group.add(plane);
-
-          anchor.onTargetFound = () => {
-            video.play();
-          };
-
-          anchor.onTargetLost = () => {
-            video.pause();
-          };
-        });
-
-        const clock = new THREE.Clock();
-
-        renderer.setAnimationLoop(() => {
-          chromaticAberrationPass.uniforms['time'].value = clock.getElapsedTime();
-          composer.render();
-        });
-      }).catch(error => {
-        console.error("Failed to start AR session:", error);
-      });
-    })
-    .catch(error => {
-      console.error('Failed to load JSON:', error);
-    });
+    // Pause the video when the marker is lost
+    anchor.onTargetLost = () => {
+      video.pause();
+    };
+  }).catch((error) => {
+    console.error("Failed to start AR session:", error);
+  });
 </script>
+
 </body>
 </html>

@@ -8,6 +8,7 @@
     body { 
       margin: 0; 
       overflow: hidden;
+      font-family: sans-serif;
     }
     #mindar-container { 
       width: 100%;
@@ -15,6 +16,27 @@
       position: absolute; 
       top: 0;
       left: 0;
+      z-index: 1; 
+    }
+    #attribution { 
+      width: auto;
+      position: absolute; 
+      bottom: 1em; 
+      right: 0; 
+      z-index: 100;
+      text-align: left;
+      background: black;
+      padding: 10px 20px;
+      color: white;
+      font-size: .8em;
+      letter-spacing: .03em;
+    }
+    #attribution::before {
+      content: '✨ ';
+    }
+    #attribution a {
+      color: aqua;
+      text-decoration: none;
     }
   </style>
   <script type="importmap">
@@ -29,6 +51,14 @@
 </head>
 <body>
 <div id="mindar-container"></div>
+<div id="attribution">
+  <span>Site Credits</span>
+  <ul id="credits">
+    <li>Template by <a href="https://digitalaltar.com">Digital Altar</a></li>
+    <li>Powered by <a href="https://threejs.org">three.js</a> & <a href="https://hiukim.github.io/mind-ar-js-doc/">MindAR</a></li>
+    <li>Clone this project at <a href="https://github.com/digitalaltar/test-ar">Github</a></li>
+  </ul>
+</div>
 
 <script type="module">
   import * as THREE from 'three';
