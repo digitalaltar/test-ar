@@ -57,19 +57,7 @@
     `
   };
 
-  const fragmentShader = `
-    uniform sampler2D videoTexture;
-    uniform float opacity;  // New opacity uniform
-    varying vec2 vUv;
-    varying vec3 vNormal;
-    void main() {
-      float intensity = pow(0.9 - dot(vNormal, vec3(0.0, 0.0, 1.0)), 2.0);
-      vec4 texColor = texture(videoTexture, vUv);  
-      gl_FragColor = vec4(texColor.rgb + vec3(0.1, 0.5, 1.0) * intensity, texColor.a * opacity); // Apply opacity
-    }
-  `;
-
-  // Function to create holographic video plane
+  // Function to create holographic video plane with opacity
   function createHolographicVideoPlane(videoSrc, videoWidth, videoHeight, opacity) {
     const video = document.createElement('video');
     video.src = videoSrc;
@@ -79,6 +67,11 @@
     video.crossOrigin = "anonymous";
     video.load();
 
+    // Ensure video starts only when it's ready
+    video.addEventListener('canplay', () => {
+      video.play();
+    });
+
     const texture = new THREE.VideoTexture(video);
     texture.needsUpdate = true; // Ensure the video updates in real-time
     const aspectRatio = videoWidth / videoHeight;
@@ -87,12 +80,35 @@
 
     const geometry = new THREE.PlaneGeometry(planeWidth, planeHeight);
 
+    // Holographic shader
+    const vertexShader = `
+      varying vec3 vNormal;
+      varying vec2 vUv;
+      void main() {
+        vNormal = normalize(normalMatrix * normal);
+        vUv = uv;
+        gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+      }
+    `;
+
+    const fragmentShader = `
+      uniform sampler2D videoTexture;
+      uniform float opacity;
+      varying vec2 vUv;
+      varying vec3 vNormal;
+      void main() {
+        float intensity = pow(0.9 - dot(vNormal, vec3(0.0, 0.0, 1.0)), 2.0);
+        vec4 texColor = texture(videoTexture, vUv);  
+        gl_FragColor = vec4(texColor.rgb + vec3(0.1, 0.5, 1.0) * intensity, texColor.a * opacity);
+      }
+    `;
+
     const material = new THREE.ShaderMaterial({
       vertexShader: vertexShader,
       fragmentShader: fragmentShader,
       uniforms: {
         videoTexture: { value: texture },
-        opacity: { value: opacity }  // Pass opacity to the shader
+        opacity: { value: opacity } // Pass opacity to the shader
       },
       transparent: true,
     });
@@ -137,14 +153,17 @@
 
         // Add the media data and anchors
         mediaData.forEach((entry, index) => {
-        const { video, width, height, opacity } = entry;
-        const videoSrc = videoRoot + video;
+          const videoSrc = videoRoot + entry.video;
+          const videoWidth = entry.width;
+          const videoHeight = entry.height;
+          const opacity = entry.opacity; // Get opacity from the JSON
 
-        // Add anchor for each image marker using its index in the combined .mind file
-        const anchor = mindarThree.addAnchor(index);
+          // Add anchor for each image marker using its index in the combined .mind file
+          const anchor = mindarThree.addAnchor(index);
 
-        const { plane, videoElement } = createHolographicVideoPlane(videoSrc, width, height, opacity);
-        anchor.group.add(plane);
+          // Create video plane with opacity
+          const { plane, video } = createHolographicVideoPlane(videoSrc, videoWidth, videoHeight, opacity);
+          anchor.group.add(plane);
 
           // Play video when the marker is detected
           anchor.onTargetFound = () => {
