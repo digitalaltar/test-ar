@@ -20,75 +20,85 @@
   </script>
 </head>
 <body>
-  <div id="mindar-container"></div>
+<div id="mindar-container"></div>
 
-  <script type="module">
-    import * as THREE from 'three';
-    import { MindARThree } from 'mindar-image-three';
+<script type="module">
+  import * as THREE from 'three';
+  import { MindARThree } from 'mindar-image-three';
 
-    // Initialize MindARThree with the container and marker file
-    const mindarThree = new MindARThree({
-      container: document.querySelector("#mindar-container"),
-      imageTargetSrc: 'targets.mind', // Replace with your .mind marker file
+  // Initialize MindARThree with the container and marker file
+  const mindarThree = new MindARThree({
+    container: document.querySelector("#mindar-container"),
+    imageTargetSrc: 'targets.mind', // Replace with your .mind marker file
+  });
+
+  const { renderer, scene, camera } = mindarThree;
+
+  // Load the video element
+  const video = document.createElement('video');
+  video.src = 'video.mp4'; // Replace with your video file path
+  video.loop = true;
+  video.muted = true;
+  video.playsInline = true;
+  video.crossOrigin = "anonymous"; 
+
+  video.onerror = () => {
+    console.error('Failed to load video.');
+  };
+
+  video.oncanplay = () => {
+    console.log('Video is ready to play!');
+  };
+
+  // Preload the video
+  video.load(); 
+
+  // Create a texture from the video
+  const texture = new THREE.VideoTexture(video);
+  texture.minFilter = THREE.LinearFilter;
+  texture.magFilter = THREE.LinearFilter;
+  texture.format = THREE.RGBAFormat;
+
+  // Video dimensions (replace with your actual video resolution)
+  const videoWidth = 1024;
+  const videoHeight = 1024;
+
+  // Calculate aspect ratio and set plane dimensions
+  const aspectRatio = videoWidth / videoHeight;
+  const planeWidth = 1; // Adjust scale if needed
+  const planeHeight = planeWidth / aspectRatio;
+
+  // Create the plane geometry with transparency enabled
+  const geometry = new THREE.PlaneGeometry(planeWidth, planeHeight);
+  const material = new THREE.MeshBasicMaterial({
+    map: texture,
+    transparent: true,    // Enable transparency
+    opacity: 0.7          // Set opacity (0 = fully transparent, 1 = fully opaque)
+  });
+  const plane = new THREE.Mesh(geometry, material);
+  plane.position.set(0, 0, 0);
+
+  const anchor = mindarThree.addAnchor(0);
+  anchor.group.add(plane);
+
+  // Start MindAR and render the scene
+  mindarThree.start().then(() => {
+    renderer.setAnimationLoop(() => {
+      renderer.render(scene, camera);
     });
 
-    const { renderer, scene, camera } = mindarThree;
-
-    // Load the video element
-    const video = document.createElement('video');
-    video.src = 'video.mp4'; // Replace with your video file path
-    video.loop = true;
-    video.muted = true;
-    video.playsInline = true; // Ensure it plays inline on mobile browsers
-    video.crossOrigin = "anonymous"; // Handle CORS issues if needed
-
-    // Add a basic check to ensure the video is loading
-    video.onerror = () => {
-      console.error('Failed to load video. Check the format or path.');
+    // Play the video when the marker is detected
+    anchor.onTargetFound = () => {
+      video.play();
     };
 
-    video.oncanplay = () => {
-      console.log('Video is ready to play!');
+    // Pause the video when the marker is lost
+    anchor.onTargetLost = () => {
+      video.pause();
     };
-
-    // Preload the video
-    video.load(); // Preload the video for smoother playback
-
-    // Create a texture from the video
-    const texture = new THREE.VideoTexture(video);
-    texture.minFilter = THREE.LinearFilter;
-    texture.magFilter = THREE.LinearFilter;
-    texture.format = THREE.RGBAFormat;
-
-    const geometry = new THREE.PlaneGeometry(1, 0.75); // Adjust to fit your scene
-    const material = new THREE.MeshBasicMaterial({ map: texture });
-    const plane = new THREE.Mesh(geometry, material);
-    plane.position.set(0, 0, 0);
-
-    const anchor = mindarThree.addAnchor(0);
-    anchor.group.add(plane);
-
-    // Add error handling and callbacks to start MindAR.js
-    mindarThree.start().then(() => {
-      console.log("AR session started");
-
-      // Render the scene once the AR session starts
-      renderer.setAnimationLoop(() => {
-        renderer.render(scene, camera);
-      });
-
-      // Play video when marker is detected
-      anchor.onTargetFound = () => {
-        video.play(); // Force the video to play when the marker is detected
-      };
-
-      // Pause video when marker is lost
-      anchor.onTargetLost = () => {
-        video.pause();
-      };
-    }).catch((error) => {
-      console.error("Failed to start AR session:", error);
-    });
-  </script>
+  }).catch((error) => {
+    console.error("Failed to start AR session:", error);
+  });
+</script>
 </body>
 </html>
