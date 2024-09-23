@@ -35,7 +35,7 @@
   const ChromaticAberrationShader = {
     uniforms: {
       tDiffuse: { value: null },
-      amount: { value: 0.2 }, // Control the strength of the shift
+      amount: { value: 0.5 }, // Higher value for dramatic shift
       time: { value: 0 } // Time for animation
     },
     vertexShader: `
@@ -52,14 +52,14 @@
       varying vec2 vUv;
 
       void main() {
-        // Circular motion offsets
+        // Circular motion offsets for red, green, and blue
         vec2 redOffset = amount * vec2(sin(time), cos(time));
         vec2 greenOffset = amount * vec2(sin(time + 2.0), cos(time + 2.0));
         vec2 blueOffset = amount * vec2(sin(time + 4.0), cos(time + 4.0));
 
         vec4 cr = texture2D(tDiffuse, vUv + redOffset * 0.01);
-        vec4 cga = texture2D(tDiffuse, vUv + greenOffset * 0.01);
-        vec4 cb = texture2D(tDiffuse, vUv + blueOffset * 0.01);
+        vec4 cga = texture2D(tDiffuse, vUv);
+        vec4 cb = texture2D(tDiffuse, vUv - blueOffset * 0.01);
 
         gl_FragColor = vec4(cr.r, cga.g, cb.b, cga.a);
       }
@@ -97,17 +97,6 @@
     return { plane: new THREE.Mesh(geometry, material), video };
   }
 
-  // Function to create a larger plane for post-processing effects
-  function createEffectPlane(videoWidth, videoHeight) {
-    const aspectRatio = videoWidth / videoHeight;
-    const planeWidth = 1.3; // Slightly larger plane for stronger effect
-    const planeHeight = planeWidth / aspectRatio;
-
-    const geometry = new THREE.PlaneGeometry(planeWidth, planeHeight);
-    const material = new THREE.MeshBasicMaterial({ color: 0x000000, transparent: true, opacity: 0 });
-    return new THREE.Mesh(geometry, material);
-  }
-
   // Load the JSON file with video settings for each marker
   fetch('media.json') // Update with your correct JSON file path
     .then(response => response.json())
@@ -140,7 +129,7 @@
 
         // Add chromatic aberration as a post-processing pass
         const chromaticAberrationPass = new ShaderPass(ChromaticAberrationShader);
-        chromaticAberrationPass.uniforms['amount'].value = 0.1; // Adjust intensity
+        chromaticAberrationPass.uniforms['amount'].value = 0.5; // Adjust intensity
         composer.addPass(chromaticAberrationPass);
 
         // Add the media data and anchors
@@ -155,31 +144,24 @@
 
           // Create video plane (1:1 size)
           const { plane, video } = createVideoPlane(videoSrc, videoWidth, videoHeight, opacity);
-          const effectPlane = createEffectPlane(videoWidth, videoHeight); // Larger plane for effects
-
           anchor.group.add(plane); // Video plane
-          anchor.group.add(effectPlane); // Invisible larger effect plane
 
           // Play video when the marker is detected
           anchor.onTargetFound = () => {
             video.play();
-            gsap.to(effectPlane.scale, { x: 1.5, y: 1.5, z: 1.5, duration: 1 }); // Apply effect plane scaling
           };
 
           // Pause video when the marker is lost
           anchor.onTargetLost = () => {
             video.pause();
-            gsap.to(effectPlane.scale, { x: 1, y: 1, z: 1, duration: 1 }); // Reset effect plane
           };
         });
 
-        // Animate the shader's time uniform
+        // Animate the shader's time uniform for circular RGB shifting
         const clock = new THREE.Clock();
-                
-        // Start rendering the AR scene with post-processing effects
         renderer.setAnimationLoop(() => {
           chromaticAberrationPass.uniforms['time'].value = clock.getElapsedTime(); // Update time uniform
-          composer.render(); // Apply post-processing effects
+          composer.render(); // Apply post-processing effects globally
         });
       }).catch(error => {
         console.error("Failed to start AR session:", error);
