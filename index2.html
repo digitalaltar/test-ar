@@ -150,18 +150,18 @@
 
         // Add post-processing for chromatic aberration and bloom effect
         const composer = new EffectComposer(renderer);
-        composer.addPass(new RenderPass(scene, camera));
+        //composer.addPass(new RenderPass(scene, camera));
 
         const chromaticAberrationPass = new ShaderPass(ChromaticAberrationShader);
         chromaticAberrationPass.uniforms['amount'].value = 0.005; // Adjust intensity
-        composer.addPass(chromaticAberrationPass);
+        //composer.addPass(chromaticAberrationPass);
 
         // UnrealBloomPass for bloom effect
         const bloomPass = new UnrealBloomPass(
           new THREE.Vector2(window.innerWidth, window.innerHeight),
           1.5, 0.4, 0.85
         ); // Add bloom pass with adjusted parameters
-        composer.addPass(bloomPass);
+        //composer.addPass(bloomPass);
 
         // Add the media data and anchors
         mediaData.forEach((entry, index) => {
