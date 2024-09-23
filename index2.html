@@ -90,6 +90,17 @@
     return { plane: new THREE.Mesh(geometry, material), video };
   }
 
+  // Function to create a larger plane for post-processing effects
+  function createEffectPlane(videoWidth, videoHeight) {
+    const aspectRatio = videoWidth / videoHeight;
+    const planeWidth = 1.2; // Increase plane size for post-processing
+    const planeHeight = planeWidth / aspectRatio;
+
+    const geometry = new THREE.PlaneGeometry(planeWidth, planeHeight);
+    const material = new THREE.MeshBasicMaterial({ color: 0x000000, transparent: true, opacity: 0 });
+    return new THREE.Mesh(geometry, material); // Invisible plane for effects
+  }
+
   // Load the JSON file with video settings for each marker
   fetch('media.json') // Update with your correct JSON file path
     .then(response => response.json())
@@ -137,18 +148,21 @@
 
           // Create video plane (1:1 size)
           const { plane, video } = createVideoPlane(videoSrc, videoWidth, videoHeight, opacity);
-          anchor.group.add(plane);
+          const effectPlane = createEffectPlane(videoWidth, videoHeight); // Larger plane for effects
+
+          anchor.group.add(plane); // Video plane
+          anchor.group.add(effectPlane); // Invisible larger effect plane
 
           // Play video when the marker is detected
           anchor.onTargetFound = () => {
             video.play();
-            gsap.to(plane.scale, { x: 1.5, y: 1.5, z: 1.5, duration: 1 });
+            gsap.to(effectPlane.scale, { x: 1.5, y: 1.5, z: 1.5, duration: 1 }); // Apply effect plane scaling
           };
 
           // Pause video when the marker is lost
           anchor.onTargetLost = () => {
             video.pause();
-            gsap.to(plane.scale, { x: 1, y: 1, z: 1, duration: 1 });
+            gsap.to(effectPlane.scale, { x: 1, y: 1, z: 1, duration: 1 }); // Reset effect plane
           };
         });
 
