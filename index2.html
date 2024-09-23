@@ -152,12 +152,12 @@
         chromaticAberrationPass.uniforms['amount'].value = 0.005; // Adjust intensity
         composer.addPass(chromaticAberrationPass);
 
-        const bokehPass = new BokehPass(scene, camera, {
-          focus: 2.0, // Adjust focus distance
-          aperture: 0.001, // Adjust aperture for blurring effect
-          maxblur: 0.01 // Max blur
-        });
-        composer.addPass(bokehPass);
+        // const bokehPass = new BokehPass(scene, camera, {
+        //   focus: 2.0, 
+        //   aperture: 0.001, 
+        //   maxblur: 0.01 
+        // });
+        // composer.addPass(bokehPass);
 
         // Add the media data and anchors
         mediaData.forEach((entry, index) => {
@@ -187,7 +187,7 @@
 
         // Start rendering the AR scene with post-processing effects
         renderer.setAnimationLoop(() => {
-          renderer.render(scene, camera);
+          composer.render(); // Use composer to apply chromatic aberration and DOF
         });
       }).catch(error => {
         console.error("Failed to start AR session:", error);
