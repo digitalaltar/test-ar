@@ -52,14 +52,14 @@
       varying vec2 vUv;
 
       void main() {
-        // Circular motion offsets
-        vec2 redOffset = amount * vec2(sin(time), cos(time));
-        vec2 greenOffset = amount * vec2(sin(time + 2.0), cos(time + 2.0));
-        vec2 blueOffset = amount * vec2(sin(time + 4.0), cos(time + 4.0));
+        // Dramatic circular motion for RGB channels
+        vec2 redOffset = amount * vec2(sin(time * 2.0), cos(time * 2.0)) * 0.2;
+        vec2 greenOffset = amount * vec2(sin(time + 2.0), cos(time + 2.0)) * 0.2;
+        vec2 blueOffset = amount * vec2(sin(time + 4.0), cos(time + 4.0)) * 0.2;
 
-        vec4 cr = texture2D(tDiffuse, vUv + redOffset * 0.01);
-        vec4 cga = texture2D(tDiffuse, vUv + greenOffset * 0.01);
-        vec4 cb = texture2D(tDiffuse, vUv + blueOffset * 0.01);
+        vec4 cr = texture2D(tDiffuse, vUv + redOffset);
+        vec4 cga = texture2D(tDiffuse, vUv); 
+        vec4 cb = texture2D(tDiffuse, vUv - blueOffset);
 
         gl_FragColor = vec4(cr.r, cga.g, cb.b, cga.a);
       }
@@ -81,10 +81,10 @@
     });
 
     const texture = new THREE.VideoTexture(video);
-    texture.needsUpdate = true; // Ensure the video updates in real-time
+    texture.needsUpdate = true; 
 
     const aspectRatio = videoWidth / videoHeight;
-    const planeWidth = 1; // Keep the video at 1:1 size
+    const planeWidth = 1; 
     const planeHeight = planeWidth / aspectRatio;
 
     const geometry = new THREE.PlaneGeometry(planeWidth, planeHeight);
@@ -162,8 +162,8 @@
                 
         // Start rendering the AR scene with post-processing effects
         renderer.setAnimationLoop(() => {
-          chromaticAberrationPass.uniforms['time'].value = clock.getElapsedTime(); // Update time uniform
-          composer.render(); // Apply post-processing effects
+          chromaticAberrationPass.uniforms['time'].value = clock.getElapsedTime(); // Keep time moving
+          composer.render(); // Apply chromatic aberration across the scene
         });
       }).catch(error => {
         console.error("Failed to start AR session:", error);
