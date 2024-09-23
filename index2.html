@@ -75,7 +75,7 @@
     const texture = new THREE.VideoTexture(video);
     texture.needsUpdate = true; // Ensure the video updates in real-time
     const aspectRatio = videoWidth / videoHeight;
-    const planeWidth = 1;
+    const planeWidth = 1.2;
     const planeHeight = planeWidth / aspectRatio;
 
     const geometry = new THREE.PlaneGeometry(planeWidth, planeHeight);
@@ -94,11 +94,24 @@
     const fragmentShader = `
       uniform sampler2D videoTexture;
       uniform float opacity;
+      uniform float rgbShiftAmount; // New uniform for RGB shift
       varying vec2 vUv;
       varying vec3 vNormal;
+      
       void main() {
         float intensity = pow(0.9 - dot(vNormal, vec3(0.0, 0.0, 1.0)), 2.0);
-        vec4 texColor = texture(videoTexture, vUv);  
+        
+        // Apply slight offsets to each color channel for RGB shift
+        vec2 redOffset = vec2(rgbShiftAmount, 0.0);
+        vec2 blueOffset = vec2(-rgbShiftAmount, 0.0);
+
+        vec4 redChannel = texture2D(videoTexture, vUv + redOffset);
+        vec4 greenChannel = texture2D(videoTexture, vUv);
+        vec4 blueChannel = texture2D(videoTexture, vUv + blueOffset);
+        
+        vec4 texColor = vec4(redChannel.r, greenChannel.g, blueChannel.b, greenChannel.a);
+        
+        // Combine with intensity and opacity
         gl_FragColor = vec4(texColor.rgb + vec3(0.1, 0.5, 1.0) * intensity, texColor.a * opacity);
       }
     `;
@@ -108,9 +121,18 @@
       fragmentShader: fragmentShader,
       uniforms: {
         videoTexture: { value: texture },
-        opacity: { value: opacity } // Pass opacity to the shader
+        opacity: { value: opacity },
+        rgbShiftAmount: { value: 0.005 }, // Add RGB shift uniform
       },
       transparent: true,
+    });
+
+    // GSAP animation for RGB shift
+    gsap.to(material.uniforms.rgbShiftAmount, {
+      value: 0.01, // New value for shift amount
+      duration: 1,
+      repeat: -1,
+      yoyo: true, // Creates a pulsating effect
     });
 
     return { plane: new THREE.Mesh(geometry, material), video };
