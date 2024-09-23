@@ -28,7 +28,34 @@
   import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
   import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
   import { ShaderPass } from 'three/addons/postprocessing/ShaderPass.js';
-  import { ChromaticAberrationShader } from 'three/addons/shaders/ChromaticAberrationShader.js';
+
+  // Custom Chromatic Aberration Shader
+  const ChromaticAberrationShader = {
+    uniforms: {
+      tDiffuse: { value: null },
+      amount: { value: 0.005 },
+    },
+    vertexShader: `
+      varying vec2 vUv;
+      void main() {
+        vUv = uv;
+        gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+      }
+    `,
+    fragmentShader: `
+      uniform sampler2D tDiffuse;
+      uniform float amount;
+      varying vec2 vUv;
+      
+      void main() {
+        vec2 offset = amount * vec2(vUv.y - 0.5, vUv.x - 0.5);
+        vec4 cr = texture2D(tDiffuse, vUv + offset);
+        vec4 cga = texture2D(tDiffuse, vUv);
+        vec4 cb = texture2D(tDiffuse, vUv - offset);
+        gl_FragColor = vec4(cr.r, cga.g, cb.b, cga.a);
+      }
+    `
+  };
 
   // Function to create holographic video plane
   function createHolographicVideoPlane(videoSrc, videoWidth, videoHeight) {
