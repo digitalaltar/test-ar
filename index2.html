@@ -140,7 +140,6 @@
         camera.position.set(0, 0, 5);
         camera.lookAt(scene.position);
 
-
         // Add lighting to the scene
         const ambientLight = new THREE.AmbientLight(0xffffff, 2); // Increased intensity
         scene.add(ambientLight);
@@ -150,8 +149,8 @@
         scene.add(pointLight);
 
         // Add post-processing for chromatic aberration and bloom effect
-        const composer = new EffectComposer(renderer);
-        composer.addPass(new RenderPass(scene, camera));
+        //const composer = new EffectComposer(renderer);
+        //composer.addPass(new RenderPass(scene, camera));
 
         const chromaticAberrationPass = new ShaderPass(ChromaticAberrationShader);
         chromaticAberrationPass.uniforms['amount'].value = 0.005; // Adjust intensity
