@@ -35,7 +35,7 @@
   const ChromaticAberrationShader = {
     uniforms: {
       tDiffuse: { value: null },
-      amount: { value: 0.01 }, // Adjust to control RGB shift intensity
+      amount: { value: 0.05 }, // Higher value for dramatic shift
     },
     vertexShader: `
       varying vec2 vUv;
@@ -51,10 +51,11 @@
 
       void main() {
         vec2 offset = amount * vec2(vUv.y - 0.5, vUv.x - 0.5);
-        vec4 cr = texture2D(tDiffuse, vUv + offset);
-        vec4 cga = texture2D(tDiffuse, vUv);
-        vec4 cb = texture2D(tDiffuse, vUv - offset);
-        gl_FragColor = vec4(cr.r, cga.g, cb.b, cga.a);
+        vec4 cr = texture2D(tDiffuse, vUv + offset * 1.2); // Amplified for red
+        vec4 cga = texture2D(tDiffuse, vUv);               // Green stays central
+        vec4 cb = texture2D(tDiffuse, vUv - offset * 1.2); // Amplified for blue
+        vec4 finalColor = vec4(cr.r, cga.g, cb.b, cga.a * 0.7); // Blend layers with transparency
+        gl_FragColor = finalColor;
       }
     `
   };
