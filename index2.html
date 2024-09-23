@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>MindAR.js with Chromatic Aberration & DOF</title>
+  <title>MindAR.js with Chromatic Aberration & Bloom</title>
   <style>
     body { margin: 0; overflow: hidden; }
     #mindar-container { width: 100vw; height: 100vh; position: fixed; top: 0; left: 0; }
@@ -30,7 +30,7 @@
   import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
   import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
   import { ShaderPass } from 'three/addons/postprocessing/ShaderPass.js';
-  import { BokehPass } from 'three/addons/postprocessing/BokehPass.js';
+  import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'; // Use UnrealBloomPass
 
   // Custom Chromatic Aberration Shader
   const ChromaticAberrationShader = {
@@ -144,7 +144,7 @@
         pointLight.position.set(5, 5, 5);
         scene.add(pointLight);
 
-        // Add post-processing for chromatic aberration and DOF
+        // Add post-processing for chromatic aberration and bloom effect
         const composer = new EffectComposer(renderer);
         composer.addPass(new RenderPass(scene, camera));
 
@@ -152,13 +152,12 @@
         chromaticAberrationPass.uniforms['amount'].value = 0.005; // Adjust intensity
         composer.addPass(chromaticAberrationPass);
 
-        const bokehPass = new BokehPass(scene, camera, {
-          focus: 25.0, // Adjust this to fit the distance of your object
-          aperture: 0.0001, // Lower aperture for less blur
-          maxblur: 0.01 // Keep max blur small
-        });
-        composer.addPass(bokehPass);
-
+        // UnrealBloomPass for bloom effect
+        const bloomPass = new UnrealBloomPass(
+          new THREE.Vector2(window.innerWidth, window.innerHeight),
+          1.5, 0.4, 0.85
+        ); // Add bloom pass with adjusted parameters
+        composer.addPass(bloomPass);
 
         // Add the media data and anchors
         mediaData.forEach((entry, index) => {
@@ -188,7 +187,7 @@
 
         // Start rendering the AR scene with post-processing effects
         renderer.setAnimationLoop(() => {
-          composer.render(); // Use composer to apply chromatic aberration and DOF
+          composer.render(); // Use composer to apply chromatic aberration and bloom
         });
       }).catch(error => {
         console.error("Failed to start AR session:", error);
