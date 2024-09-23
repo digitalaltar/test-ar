@@ -59,7 +59,7 @@
     `
   };
 
-  // Function to create holographic video plane
+  // Function to create holographic video plane with 1:1 video scale and larger plane
   function createHolographicVideoPlane(videoSrc, videoWidth, videoHeight, opacity) {
     const video = document.createElement('video');
     video.src = videoSrc;
@@ -75,19 +75,40 @@
 
     const texture = new THREE.VideoTexture(video);
     texture.needsUpdate = true; // Ensure the video updates in real-time
-    texture.wrapS = THREE.ClampToEdgeWrapping; // Prevents texture stretching
+    texture.wrapS = THREE.ClampToEdgeWrapping;
     texture.wrapT = THREE.ClampToEdgeWrapping;
 
     const aspectRatio = videoWidth / videoHeight;
-    const planeWidth = 1.2; // Increase plane size slightly
+    const videoPlaneWidth = 1; // Keep the video at 1:1 size
+    const videoPlaneHeight = videoPlaneWidth / aspectRatio;
+
+    // Use a larger plane for effects but constrain the video texture within it
+    const planeWidth = videoPlaneWidth * 1.2; // Larger plane for the chromatic aberration effects
     const planeHeight = planeWidth / aspectRatio;
 
     const geometry = new THREE.PlaneGeometry(planeWidth, planeHeight);
 
-    const material = new THREE.MeshBasicMaterial({
-      map: texture,
+    // Adjust the UV mapping to keep the video at 1:1 while the effects extend beyond the plane
+    const material = new THREE.ShaderMaterial({
+      vertexShader: `
+        varying vec2 vUv;
+        void main() {
+          vUv = uv * vec2(${videoPlaneWidth / planeWidth}, ${videoPlaneHeight / planeHeight}); // Adjust UVs for video
+          gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+        }
+      `,
+      fragmentShader: `
+        uniform sampler2D videoTexture;
+        varying vec2 vUv;
+        void main() {
+          vec4 texColor = texture2D(videoTexture, vUv);
+          gl_FragColor = vec4(texColor.rgb, texColor.a);
+        }
+      `,
+      uniforms: {
+        videoTexture: { value: texture },
+      },
       transparent: true,
-      opacity: opacity,
     });
 
     return { plane: new THREE.Mesh(geometry, material), video };
