@@ -191,7 +191,7 @@
 
         // Start rendering the AR scene with post-processing effects
         renderer.setAnimationLoop(() => {
-          renderer.render(scene, camera); // Use composer to apply chromatic aberration and bloom
+          composer.render(); // Use composer to apply chromatic aberration and bloom
         });
       }).catch(error => {
         console.error("Failed to start AR session:", error);
