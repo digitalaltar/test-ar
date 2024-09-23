@@ -35,7 +35,7 @@
   const ChromaticAberrationShader = {
     uniforms: {
       tDiffuse: { value: null },
-      amount: { value: 0.5 }, // Higher value for dramatic shift
+      amount: { value: 0.2 }, // Control the strength of the shift
       time: { value: 0 } // Time for animation
     },
     vertexShader: `
@@ -52,14 +52,14 @@
       varying vec2 vUv;
 
       void main() {
-        // Circular motion offsets for red, green, and blue
+        // Circular motion offsets
         vec2 redOffset = amount * vec2(sin(time), cos(time));
         vec2 greenOffset = amount * vec2(sin(time + 2.0), cos(time + 2.0));
         vec2 blueOffset = amount * vec2(sin(time + 4.0), cos(time + 4.0));
 
         vec4 cr = texture2D(tDiffuse, vUv + redOffset * 0.01);
-        vec4 cga = texture2D(tDiffuse, vUv);
-        vec4 cb = texture2D(tDiffuse, vUv - blueOffset * 0.01);
+        vec4 cga = texture2D(tDiffuse, vUv + greenOffset * 0.01);
+        vec4 cb = texture2D(tDiffuse, vUv + blueOffset * 0.01);
 
         gl_FragColor = vec4(cr.r, cga.g, cb.b, cga.a);
       }
@@ -129,7 +129,7 @@
 
         // Add chromatic aberration as a post-processing pass
         const chromaticAberrationPass = new ShaderPass(ChromaticAberrationShader);
-        chromaticAberrationPass.uniforms['amount'].value = 0.5; // Adjust intensity
+        chromaticAberrationPass.uniforms['amount'].value = 0.1; // Adjust intensity
         composer.addPass(chromaticAberrationPass);
 
         // Add the media data and anchors
@@ -157,11 +157,13 @@
           };
         });
 
-        // Animate the shader's time uniform for circular RGB shifting
+        // Animate the shader's time uniform
         const clock = new THREE.Clock();
+                
+        // Start rendering the AR scene with post-processing effects
         renderer.setAnimationLoop(() => {
           chromaticAberrationPass.uniforms['time'].value = clock.getElapsedTime(); // Update time uniform
-          composer.render(); // Apply post-processing effects globally
+          composer.render(); // Apply post-processing effects
         });
       }).catch(error => {
         console.error("Failed to start AR session:", error);
