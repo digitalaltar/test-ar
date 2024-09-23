@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>MindAR.js Multiple Markers in One .mind File</title>
+  <title>MindAR.js with Chromatic Aberration</title>
   <style>
     body { margin: 0; overflow: hidden; }
     #mindar-container { width: 100vw; height: 100vh; position: fixed; top: 0; left: 0; }
@@ -25,6 +25,10 @@
 <script type="module">
   import * as THREE from 'three';
   import { MindARThree } from 'mindar-image-three';
+  import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
+  import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
+  import { ShaderPass } from 'three/addons/postprocessing/ShaderPass.js';
+  import { ChromaticAberrationShader } from 'three/addons/shaders/ChromaticAberrationShader.js';
 
   // Function to create holographic video plane
   function createHolographicVideoPlane(videoSrc, videoWidth, videoHeight) {
@@ -110,6 +114,14 @@
         pointLight.position.set(5, 5, 5);
         scene.add(pointLight);
 
+        // Add post-processing for chromatic aberration
+        const composer = new EffectComposer(renderer);
+        composer.addPass(new RenderPass(scene, camera));
+
+        const chromaticAberrationPass = new ShaderPass(ChromaticAberrationShader);
+        chromaticAberrationPass.uniforms['amount'].value = 0.005; // Adjust intensity
+        composer.addPass(chromaticAberrationPass);
+
         // Add the media data and anchors
         mediaData.forEach((entry, index) => {
           const videoSrc = videoRoot + entry.video;
@@ -134,9 +146,9 @@
           };
         });
 
-        // Start rendering the AR scene
+        // Start rendering the AR scene with the composer
         renderer.setAnimationLoop(() => {
-          renderer.render(scene, camera); // Ensure the camera is initialized before rendering
+          composer.render(); // Use composer to apply chromatic aberration
         });
       }).catch(error => {
         console.error("Failed to start AR session:", error);
