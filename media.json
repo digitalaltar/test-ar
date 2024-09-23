@@ -3,14 +3,14 @@
   "videoRoot": "videos/",
   "media": [
     {
-      "marker": "marker1.mind",
+      "marker": "targets1.mind",
       "video": "video1.mp4",
       "width": 1024,
       "height": 1024,
       "opacity": 0.8
     },
     {
-      "marker": "marker2.mind",
+      "marker": "targets2.mind",
       "video": "video2.mp4",
       "width": 1024,
       "height": 1024,
