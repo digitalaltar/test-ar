@@ -5,8 +5,34 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>MindAR.js with Chromatic Aberration</title>
   <style>
-    body { margin: 0; overflow: hidden; }
-    #mindar-container { width: 100vw; height: 100vh; position: fixed; top: 0; left: 0; }
+    body { 
+      margin: 0; 
+      overflow: hidden;
+      font-family: sans-serif;
+    }
+    #mindar-container { 
+      width: 100%;
+      height: 100%;
+      position: absolute; 
+      top: 0;
+      left: 0;
+      z-index: 1; 
+    }
+    #attribution { 
+      width: auto;
+      position: absolute; 
+      bottom: 1em; 
+      right: 0; 
+      z-index: 2;
+      text-align: right;
+      background: black;
+      padding: 10px 20px;
+      color: white;
+      font-size: medium;
+    }
+    #attribution::before {
+      content: '✨ ';
+    }
   </style>
   <!-- Import map for dependencies -->
   <script type="importmap">
@@ -23,6 +49,13 @@
 </head>
 <body>
 <div id="mindar-container"></div>
+<div id="attribution">
+  <small>Site Credits</small>
+  <ul id="credits">
+    <li>AR experience template by Digital Altar</li>
+    <li>Developed with three.js and MindAR.js</li>
+  </ul>
+</div>
 
 <script type="module">
   import * as THREE from 'three';
@@ -52,14 +85,13 @@
       varying vec2 vUv;
 
       void main() {
-        // Dramatic circular motion for RGB channels
-        vec2 redOffset = amount * vec2(sin(time * 2.0), cos(time * 2.0)) * 0.2;
-        vec2 greenOffset = amount * vec2(sin(time + 2.0), cos(time + 2.0)) * 0.2;
-        vec2 blueOffset = amount * vec2(sin(time + 4.0), cos(time + 4.0)) * 0.2;
+        vec2 redOffset = amount * vec2(sin(time * 2.0), cos(time * 2.0)) * 0.5;
+        vec2 greenOffset = amount * vec2(sin(time + 2.0), cos(time + 2.0)) * 0.5;
+        vec2 blueOffset = amount * vec2(sin(time + 4.0), cos(time + 4.0)) * 0.5;
 
-        vec4 cr = texture2D(tDiffuse, vUv + redOffset);
-        vec4 cga = texture2D(tDiffuse, vUv); 
-        vec4 cb = texture2D(tDiffuse, vUv - blueOffset);
+        vec4 cr = texture2D(tDiffuse, vUv + redOffset); 
+        vec4 cga = texture2D(tDiffuse, vUv);             
+        vec4 cb = texture2D(tDiffuse, vUv - blueOffset); 
 
         gl_FragColor = vec4(cr.r, cga.g, cb.b, cga.a);
       }
@@ -81,10 +113,10 @@
     });
 
     const texture = new THREE.VideoTexture(video);
-    texture.needsUpdate = true; 
+    texture.needsUpdate = true;
 
     const aspectRatio = videoWidth / videoHeight;
-    const planeWidth = 1; 
+    const planeWidth = 2;
     const planeHeight = planeWidth / aspectRatio;
 
     const geometry = new THREE.PlaneGeometry(planeWidth, planeHeight);
@@ -98,7 +130,7 @@
   }
 
   // Load the JSON file with video settings for each marker
-  fetch('media.json') // Update with your correct JSON file path
+  fetch('media.json')
     .then(response => response.json())
     .then(jsonData => {
       const mindFile = jsonData.mindFile;
@@ -127,9 +159,8 @@
         const composer = new EffectComposer(renderer);
         composer.addPass(new RenderPass(scene, camera));
 
-        // Add chromatic aberration as a post-processing pass
         const chromaticAberrationPass = new ShaderPass(ChromaticAberrationShader);
-        chromaticAberrationPass.uniforms['amount'].value = 0.1; // Adjust intensity
+        chromaticAberrationPass.uniforms['amount'].value = 0.2; // Adjust intensity
         composer.addPass(chromaticAberrationPass);
 
         // Add the media data and anchors
@@ -139,7 +170,6 @@
           const videoHeight = entry.height;
           const opacity = entry.opacity;
 
-          // Add anchor for each image marker using its index in the combined .mind file
           const anchor = mindarThree.addAnchor(index);
 
           // Create video plane (1:1 size)
@@ -157,13 +187,12 @@
           };
         });
 
-        // Animate the shader's time uniform
         const clock = new THREE.Clock();
-                
-        // Start rendering the AR scene with post-processing effects
+
+        // Apply chromatic aberration to the entire scene, not tied to a plane
         renderer.setAnimationLoop(() => {
           chromaticAberrationPass.uniforms['time'].value = clock.getElapsedTime(); // Keep time moving
-          composer.render(); // Apply chromatic aberration across the scene
+          composer.render(); // Apply chromatic aberration across the entire scene
         });
       }).catch(error => {
         console.error("Failed to start AR session:", error);
