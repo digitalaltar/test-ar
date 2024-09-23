@@ -74,8 +74,12 @@
     });
 
     const texture = new THREE.VideoTexture(video);
+    texture.needsUpdate = true; // Ensure the video updates in real-time
+    texture.wrapS = THREE.ClampToEdgeWrapping; // Prevents texture stretching
+    texture.wrapT = THREE.ClampToEdgeWrapping;
+
     const aspectRatio = videoWidth / videoHeight;
-    const planeWidth = 1;
+    const planeWidth = 1.2; // Increase plane size slightly
     const planeHeight = planeWidth / aspectRatio;
 
     const geometry = new THREE.PlaneGeometry(planeWidth, planeHeight);
