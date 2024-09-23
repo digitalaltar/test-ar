@@ -61,51 +61,47 @@
       const videoRoot = jsonData.videoRoot;   // Root for videos
       const mediaData = jsonData.media;
 
-      // Initialize MindARThree once we know the image targets
+      // Initialize MindARThree with dynamic imageTargetSrc
       const mindarThree = new MindARThree({
         container: document.querySelector("#mindar-container"),
+        imageTargetSrc: markerRoot + mediaData[0].marker // Prepend marker root with the first marker
       });
 
-      // Add the .mind file dynamically using the first marker (assuming one .mind file contains multiple targets)
-      mindarThree.addImageTargets(markerRoot + mediaData[0].marker).then(() => {
-        const { renderer, scene, camera } = mindarThree;
+      const { renderer, scene, camera } = mindarThree;
 
-        mediaData.forEach((entry, index) => {
-          const markerFile = markerRoot + entry.marker; // Prepend marker root
-          const videoSrc = videoRoot + entry.video;     // Prepend video root
-          const videoWidth = entry.width;
-          const videoHeight = entry.height;
-          const opacityValue = entry.opacity;           // Fetch opacity from JSON
+      mediaData.forEach((entry, index) => {
+        const markerFile = markerRoot + entry.marker; // Prepend marker root
+        const videoSrc = videoRoot + entry.video;     // Prepend video root
+        const videoWidth = entry.width;
+        const videoHeight = entry.height;
+        const opacityValue = entry.opacity;           // Fetch opacity from JSON
 
-          // Add anchor for each image marker
-          const anchor = mindarThree.addAnchor(index);
+        // Add anchor for each image marker
+        const anchor = mindarThree.addAnchor(index);
 
-          // Create video plane with dynamic opacity
-          const { plane, video } = createVideoPlane(videoSrc, videoWidth, videoHeight, opacityValue);
+        // Create video plane with dynamic opacity
+        const { plane, video } = createVideoPlane(videoSrc, videoWidth, videoHeight, opacityValue);
 
-          anchor.group.add(plane);
+        anchor.group.add(plane);
 
-          // Play video when the marker is detected
-          anchor.onTargetFound = () => {
-            video.play();
-          };
+        // Play video when the marker is detected
+        anchor.onTargetFound = () => {
+          video.play();
+        };
 
-          // Pause video when the marker is lost
-          anchor.onTargetLost = () => {
-            video.pause();
-          };
-        });
+        // Pause video when the marker is lost
+        anchor.onTargetLost = () => {
+          video.pause();
+        };
+      });
 
-        // Start the MindAR session after targets are added
-        mindarThree.start().then(() => {
-          renderer.setAnimationLoop(() => {
-            renderer.render(scene, camera);
-          });
-        }).catch((error) => {
-          console.error("Failed to start AR session:", error);
+      // Start the MindAR session
+      mindarThree.start().then(() => {
+        renderer.setAnimationLoop(() => {
+          renderer.render(scene, camera);
         });
       }).catch((error) => {
-        console.error("Failed to load marker:", error);
+        console.error("Failed to start AR session:", error);
       });
     })
     .catch(error => {
