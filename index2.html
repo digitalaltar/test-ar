@@ -46,21 +46,21 @@
     // Holographic shader
     const vertexShader = `
       varying vec3 vNormal;
-      varying vec2 uv; // Fix: pass UV coordinates to fragment shader
+      varying vec2 vUv; // Corrected UV coordinates variable
       void main() {
         vNormal = normalize(normalMatrix * normal);
-        uv = uv; // Fix: assign uv
+        vUv = uv; // Assign UV coordinates to vUv
         gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
       }
     `;
 
     const fragmentShader = `
       uniform sampler2D texture;
-      varying vec2 uv;
+      varying vec2 vUv; // Corrected UV variable
       varying vec3 vNormal;
       void main() {
         float intensity = pow(0.9 - dot(vNormal, vec3(0.0, 0.0, 1.0)), 2.0);
-        vec4 texColor = texture2D(texture, uv);  // Fix: ensure uv is used
+        vec4 texColor = texture2D(texture, vUv);  // Corrected UV usage
         gl_FragColor = vec4(texColor.rgb + vec3(0.1, 0.5, 1.0) * intensity, texColor.a * 0.8);
       }
     `;
