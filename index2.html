@@ -26,7 +26,7 @@
   import * as THREE from 'three';
   import { MindARThree } from 'mindar-image-three';
 
-  // With this new function
+  // Function to create holographic video plane
   function createHolographicVideoPlane(videoSrc, videoWidth, videoHeight) {
     const video = document.createElement('video');
     video.src = videoSrc;
@@ -88,10 +88,12 @@
         imageTargetSrc: mindFile  // Use the combined .mind file
       });
 
-      const { renderer, scene, camera } = mindarThree;
-
       mindarThree.start().then(() => {
 
+        // Get renderer, scene, and camera after starting the AR session
+        const { renderer, scene, camera } = mindarThree;
+
+        // Add lighting to the scene
         const ambientLight = new THREE.AmbientLight(0x404040);
         scene.add(ambientLight);
 
@@ -99,11 +101,11 @@
         pointLight.position.set(5, 5, 5);
         scene.add(pointLight);
 
+        // Add the media data and anchors
         mediaData.forEach((entry, index) => {
           const videoSrc = videoRoot + entry.video;
           const videoWidth = entry.width;
           const videoHeight = entry.height;
-          const opacityValue = entry.opacity;
 
           // Add anchor for each image marker using its index in the combined .mind file
           const anchor = mindarThree.addAnchor(index);
@@ -125,7 +127,7 @@
 
         // Start rendering the AR scene
         renderer.setAnimationLoop(() => {
-          renderer.render(scene, camera);
+          renderer.render(scene, camera); // Ensure the camera is initialized before rendering
         });
       }).catch(error => {
         console.error("Failed to start AR session:", error);
