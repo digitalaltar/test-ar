@@ -152,12 +152,13 @@
         chromaticAberrationPass.uniforms['amount'].value = 0.005; // Adjust intensity
         composer.addPass(chromaticAberrationPass);
 
-        // const bokehPass = new BokehPass(scene, camera, {
-        //   focus: 2.0, 
-        //   aperture: 0.001, 
-        //   maxblur: 0.01 
-        // });
-        // composer.addPass(bokehPass);
+        const bokehPass = new BokehPass(scene, camera, {
+          focus: 5.0, // Adjust this to fit the distance of your object
+          aperture: 0.0001, // Lower aperture for less blur
+          maxblur: 0.01 // Keep max blur small
+        });
+        composer.addPass(bokehPass);
+
 
         // Add the media data and anchors
         mediaData.forEach((entry, index) => {
