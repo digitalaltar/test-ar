@@ -150,7 +150,7 @@
 
         // Add post-processing for chromatic aberration and bloom effect
         const composer = new EffectComposer(renderer);
-        //composer.addPass(new RenderPass(scene, camera));
+        composer.addPass(new RenderPass(scene, camera));
 
         const chromaticAberrationPass = new ShaderPass(ChromaticAberrationShader);
         chromaticAberrationPass.uniforms['amount'].value = 0.005; // Adjust intensity
