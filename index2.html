@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>MindAR.js with Chromatic Aberration</title>
+  <title>MindAR.js with Chromatic Aberration & DOF</title>
   <style>
     body { margin: 0; overflow: hidden; }
     #mindar-container { width: 100vw; height: 100vh; position: fixed; top: 0; left: 0; }
@@ -18,6 +18,8 @@
       }
     }
   </script>
+  <!-- GSAP for animations -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.9.1/gsap.min.js"></script>
 </head>
 <body>
 <div id="mindar-container"></div>
@@ -28,6 +30,7 @@
   import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
   import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
   import { ShaderPass } from 'three/addons/postprocessing/ShaderPass.js';
+  import { BokehPass } from 'three/addons/postprocessing/BokehPass.js';
 
   // Custom Chromatic Aberration Shader
   const ChromaticAberrationShader = {
@@ -46,7 +49,7 @@
       uniform sampler2D tDiffuse;
       uniform float amount;
       varying vec2 vUv;
-      
+
       void main() {
         vec2 offset = amount * vec2(vUv.y - 0.5, vUv.x - 0.5);
         vec4 cr = texture2D(tDiffuse, vUv + offset);
@@ -141,13 +144,20 @@
         pointLight.position.set(5, 5, 5);
         scene.add(pointLight);
 
-        // Add post-processing for chromatic aberration
+        // Add post-processing for chromatic aberration and DOF
         const composer = new EffectComposer(renderer);
         composer.addPass(new RenderPass(scene, camera));
 
         const chromaticAberrationPass = new ShaderPass(ChromaticAberrationShader);
         chromaticAberrationPass.uniforms['amount'].value = 0.005; // Adjust intensity
         composer.addPass(chromaticAberrationPass);
+
+        const bokehPass = new BokehPass(scene, camera, {
+          focus: 1.0, // Adjust focus distance
+          aperture: 0.025, // Adjust aperture for blurring effect
+          maxblur: 0.01 // Max blur
+        });
+        composer.addPass(bokehPass);
 
         // Add the media data and anchors
         mediaData.forEach((entry, index) => {
@@ -162,20 +172,22 @@
           const { plane, video } = createHolographicVideoPlane(videoSrc, videoWidth, videoHeight);
           anchor.group.add(plane);
 
-          // Play video when the marker is detected
+          // Play video when the marker is detected and scale the plane to make it pop out
           anchor.onTargetFound = () => {
             video.play();
+            gsap.to(plane.scale, { x: 1.5, y: 1.5, z: 1.5, duration: 1 }); // Scale up
           };
 
-          // Pause video when the marker is lost
+          // Pause video and scale down when the marker is lost
           anchor.onTargetLost = () => {
             video.pause();
+            gsap.to(plane.scale, { x: 1, y: 1, z: 1, duration: 1 }); // Scale back to original
           };
         });
 
-        // Start rendering the AR scene with the composer
+        // Start rendering the AR scene with post-processing effects
         renderer.setAnimationLoop(() => {
-          composer.render(); // Use composer to apply chromatic aberration
+          composer.render(); // Use composer to apply chromatic aberration and DOF
         });
       }).catch(error => {
         console.error("Failed to start AR session:", error);
