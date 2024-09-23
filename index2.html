@@ -149,8 +149,8 @@
         scene.add(pointLight);
 
         // Add post-processing for chromatic aberration and bloom effect
-        //const composer = new EffectComposer(renderer);
-        //composer.addPass(new RenderPass(scene, camera));
+        const composer = new EffectComposer(renderer);
+        composer.addPass(new RenderPass(scene, camera));
 
         const chromaticAberrationPass = new ShaderPass(ChromaticAberrationShader);
         chromaticAberrationPass.uniforms['amount'].value = 0.005; // Adjust intensity
@@ -191,7 +191,7 @@
 
         // Start rendering the AR scene with post-processing effects
         renderer.setAnimationLoop(() => {
-          composer.render(); // Use composer to apply chromatic aberration and bloom
+          renderer.render(scene, camera); // Use composer to apply chromatic aberration and bloom
         });
       }).catch(error => {
         console.error("Failed to start AR session:", error);
