@@ -35,7 +35,7 @@
   const ChromaticAberrationShader = {
     uniforms: {
       tDiffuse: { value: null },
-      amount: { value: 0.1 }, // Control the strength of the shift
+      amount: { value: 0.2 }, // Control the strength of the shift
       time: { value: 0 } // Time for animation
     },
     vertexShader: `
@@ -140,7 +140,7 @@
 
         // Add chromatic aberration as a post-processing pass
         const chromaticAberrationPass = new ShaderPass(ChromaticAberrationShader);
-        chromaticAberrationPass.uniforms['amount'].value = 0.05; // Adjust intensity
+        chromaticAberrationPass.uniforms['amount'].value = 0.1; // Adjust intensity
         composer.addPass(chromaticAberrationPass);
 
         // Add the media data and anchors
