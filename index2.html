@@ -59,8 +59,8 @@
     `
   };
 
-  // Function to create holographic video plane with 1:1 video scale and larger plane
-  function createHolographicVideoPlane(videoSrc, videoWidth, videoHeight, opacity) {
+  // Function to create video plane at 1:1 scale
+  function createVideoPlane(videoSrc, videoWidth, videoHeight, opacity) {
     const video = document.createElement('video');
     video.src = videoSrc;
     video.loop = true;
@@ -75,40 +75,16 @@
 
     const texture = new THREE.VideoTexture(video);
     texture.needsUpdate = true; // Ensure the video updates in real-time
-    texture.wrapS = THREE.ClampToEdgeWrapping;
-    texture.wrapT = THREE.ClampToEdgeWrapping;
 
     const aspectRatio = videoWidth / videoHeight;
-    const videoPlaneWidth = 1; // Keep the video at 1:1 size
-    const videoPlaneHeight = videoPlaneWidth / aspectRatio;
-
-    // Use a larger plane for effects but constrain the video texture within it
-    const planeWidth = videoPlaneWidth * 1.2; // Larger plane for the chromatic aberration effects
+    const planeWidth = 1; // Keep the video at 1:1 size
     const planeHeight = planeWidth / aspectRatio;
 
     const geometry = new THREE.PlaneGeometry(planeWidth, planeHeight);
-
-    // Adjust the UV mapping to keep the video at 1:1 while the effects extend beyond the plane
-    const material = new THREE.ShaderMaterial({
-      vertexShader: `
-        varying vec2 vUv;
-        void main() {
-          vUv = uv * vec2(${videoPlaneWidth / planeWidth}, ${videoPlaneHeight / planeHeight}); // Adjust UVs for video
-          gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
-        }
-      `,
-      fragmentShader: `
-        uniform sampler2D videoTexture;
-        varying vec2 vUv;
-        void main() {
-          vec4 texColor = texture2D(videoTexture, vUv);
-          gl_FragColor = vec4(texColor.rgb, texColor.a);
-        }
-      `,
-      uniforms: {
-        videoTexture: { value: texture },
-      },
+    const material = new THREE.MeshBasicMaterial({
+      map: texture,
       transparent: true,
+      opacity: opacity,
     });
 
     return { plane: new THREE.Mesh(geometry, material), video };
@@ -118,21 +94,18 @@
   fetch('media.json') // Update with your correct JSON file path
     .then(response => response.json())
     .then(jsonData => {
-      const mindFile = jsonData.mindFile;  // Single combined .mind file
-      const videoRoot = jsonData.videoRoot;    // Root for videos
-      const mediaData = jsonData.media;        // Media array
+      const mindFile = jsonData.mindFile;
+      const videoRoot = jsonData.videoRoot;
+      const mediaData = jsonData.media;
 
       // Initialize a single MindARThree instance for the entire AR session
       const mindarThree = new MindARThree({
         container: document.querySelector("#mindar-container"),
-        imageTargetSrc: mindFile  // Use the combined .mind file
+        imageTargetSrc: mindFile
       });
 
       mindarThree.start().then(() => {
-
-        // Get renderer, scene, and camera after starting the AR session
         const { renderer, scene, camera } = mindarThree;
-
         renderer.setClearColor(0x000000, 0); // Transparent background
 
         // Add lighting to the scene
@@ -162,26 +135,26 @@
           // Add anchor for each image marker using its index in the combined .mind file
           const anchor = mindarThree.addAnchor(index);
 
-          // Create video plane
-          const { plane, video } = createHolographicVideoPlane(videoSrc, videoWidth, videoHeight, opacity);
+          // Create video plane (1:1 size)
+          const { plane, video } = createVideoPlane(videoSrc, videoWidth, videoHeight, opacity);
           anchor.group.add(plane);
 
-          // Play video when the marker is detected and scale the plane to make it pop out
+          // Play video when the marker is detected
           anchor.onTargetFound = () => {
             video.play();
-            gsap.to(plane.scale, { x: 1.5, y: 1.5, z: 1.5, duration: 1 }); // Scale up
+            gsap.to(plane.scale, { x: 1.5, y: 1.5, z: 1.5, duration: 1 });
           };
 
-          // Pause video and scale down when the marker is lost
+          // Pause video when the marker is lost
           anchor.onTargetLost = () => {
             video.pause();
-            gsap.to(plane.scale, { x: 1, y: 1, z: 1, duration: 1 }); // Scale back to original
+            gsap.to(plane.scale, { x: 1, y: 1, z: 1, duration: 1 });
           };
         });
 
         // Start rendering the AR scene with post-processing effects
         renderer.setAnimationLoop(() => {
-          composer.render(); // Apply post-processing effects
+          composer.render(); // Apply post-processing effects globally
         });
       }).catch(error => {
         console.error("Failed to start AR session:", error);
