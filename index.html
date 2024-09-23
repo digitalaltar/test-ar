@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>MindAR.js Multiple Videos Example</title>
+  <title>MindAR.js Gallery Example</title>
   <style>
     body { margin: 0; overflow: hidden; }
     #mindar-container { width: 100vw; height: 100vh; position: fixed; top: 0; left: 0; }
@@ -57,26 +57,25 @@
   fetch('media.json') // Update with your correct JSON file path
     .then(response => response.json())
     .then(jsonData => {
-      const markerRoot = jsonData.markerRoot; // Root for markers
+      const mindFile = jsonData.mindFile; // Get the .mind file path from JSON
       const videoRoot = jsonData.videoRoot;   // Root for videos
       const mediaData = jsonData.media;
 
-      // Initialize MindARThree with dynamic imageTargetSrc
+      // Initialize MindARThree with dynamic imageTargetSrc from JSON
       const mindarThree = new MindARThree({
         container: document.querySelector("#mindar-container"),
-        imageTargetSrc: markerRoot + mediaData[0].marker // Prepend marker root with the first marker
+        imageTargetSrc: mindFile // Load the .mind file dynamically from JSON
       });
 
       const { renderer, scene, camera } = mindarThree;
 
       mediaData.forEach((entry, index) => {
-        const markerFile = markerRoot + entry.marker; // Prepend marker root
         const videoSrc = videoRoot + entry.video;     // Prepend video root
         const videoWidth = entry.width;
         const videoHeight = entry.height;
         const opacityValue = entry.opacity;           // Fetch opacity from JSON
 
-        // Add anchor for each image marker
+        // Add anchor for each image marker using its index from the `.mind` file
         const anchor = mindarThree.addAnchor(index);
 
         // Create video plane with dynamic opacity
