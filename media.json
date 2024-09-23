@@ -7,14 +7,14 @@
       "width": 1024,
       "height": 1024,
       "opacity": 0.8,
-      "applyChromaticAberration": true
+      "rgbShift": true
     },
     {
       "video": "video-cartoons.mp4",
       "width": 1024,
       "height": 1024,
       "opacity": 0.5,
-      "applyChromaticAberration": true
+      "rgbShift": false
     }
   ]
 }
