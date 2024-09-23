@@ -18,6 +18,8 @@
       }
     }
   </script>
+  <!-- GSAP for animations -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.9.1/gsap.min.js"></script>
 </head>
 <body>
 <div id="mindar-container"></div>
@@ -33,7 +35,7 @@
   const ChromaticAberrationShader = {
     uniforms: {
       tDiffuse: { value: null },
-      amount: { value: 0.1 },
+      amount: { value: 0.01 }, // Adjust to control RGB shift intensity
     },
     vertexShader: `
       varying vec2 vUv;
@@ -46,7 +48,7 @@
       uniform sampler2D tDiffuse;
       uniform float amount;
       varying vec2 vUv;
-      
+
       void main() {
         vec2 offset = amount * vec2(vUv.y - 0.5, vUv.x - 0.5);
         vec4 cr = texture2D(tDiffuse, vUv + offset);
@@ -57,7 +59,7 @@
     `
   };
 
-  // Function to create holographic video plane with opacity
+  // Function to create holographic video plane
   function createHolographicVideoPlane(videoSrc, videoWidth, videoHeight, opacity) {
     const video = document.createElement('video');
     video.src = videoSrc;
@@ -67,50 +69,21 @@
     video.crossOrigin = "anonymous";
     video.load();
 
-    // Ensure video starts only when it's ready
     video.addEventListener('canplay', () => {
       video.play();
     });
 
     const texture = new THREE.VideoTexture(video);
-    texture.needsUpdate = true; // Ensure the video updates in real-time
     const aspectRatio = videoWidth / videoHeight;
-    const planeWidth = 1.2;
+    const planeWidth = 1;
     const planeHeight = planeWidth / aspectRatio;
 
     const geometry = new THREE.PlaneGeometry(planeWidth, planeHeight);
 
-    // Holographic shader
-    const vertexShader = `
-      varying vec3 vNormal;
-      varying vec2 vUv;
-      void main() {
-        vNormal = normalize(normalMatrix * normal);
-        vUv = uv;
-        gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
-      }
-    `;
-
-    const fragmentShader = `
-      uniform sampler2D videoTexture;
-      uniform float opacity;
-      varying vec2 vUv;
-      varying vec3 vNormal;
-      void main() {
-        float intensity = pow(0.9 - dot(vNormal, vec3(0.0, 0.0, 1.0)), 2.0);
-        vec4 texColor = texture(videoTexture, vUv);  
-        gl_FragColor = vec4(texColor.rgb + vec3(0.1, 0.5, 1.0) * intensity, texColor.a * opacity);
-      }
-    `;
-
-    const material = new THREE.ShaderMaterial({
-      vertexShader: vertexShader,
-      fragmentShader: fragmentShader,
-      uniforms: {
-        videoTexture: { value: texture },
-        opacity: { value: opacity } // Pass opacity to the shader
-      },
+    const material = new THREE.MeshBasicMaterial({
+      map: texture,
       transparent: true,
+      opacity: opacity,
     });
 
     return { plane: new THREE.Mesh(geometry, material), video };
@@ -135,20 +108,23 @@
         // Get renderer, scene, and camera after starting the AR session
         const { renderer, scene, camera } = mindarThree;
 
+        renderer.setClearColor(0x000000, 0); // Transparent background
+
         // Add lighting to the scene
-        const ambientLight = new THREE.AmbientLight(0x404040);
+        const ambientLight = new THREE.AmbientLight(0xffffff, 2);
         scene.add(ambientLight);
 
         const pointLight = new THREE.PointLight(0xffffff, 1, 100);
         pointLight.position.set(5, 5, 5);
         scene.add(pointLight);
 
-        // Add post-processing for chromatic aberration
+        // Set up post-processing
         const composer = new EffectComposer(renderer);
         composer.addPass(new RenderPass(scene, camera));
 
+        // Add chromatic aberration as a post-processing pass
         const chromaticAberrationPass = new ShaderPass(ChromaticAberrationShader);
-        chromaticAberrationPass.uniforms['amount'].value = 0.005; // Adjust intensity
+        chromaticAberrationPass.uniforms['amount'].value = 0.01; // Adjust intensity
         composer.addPass(chromaticAberrationPass);
 
         // Add the media data and anchors
@@ -156,29 +132,31 @@
           const videoSrc = videoRoot + entry.video;
           const videoWidth = entry.width;
           const videoHeight = entry.height;
-          const opacity = entry.opacity; // Get opacity from the JSON
+          const opacity = entry.opacity;
 
           // Add anchor for each image marker using its index in the combined .mind file
           const anchor = mindarThree.addAnchor(index);
 
-          // Create video plane with opacity
+          // Create video plane
           const { plane, video } = createHolographicVideoPlane(videoSrc, videoWidth, videoHeight, opacity);
           anchor.group.add(plane);
 
-          // Play video when the marker is detected
+          // Play video when the marker is detected and scale the plane to make it pop out
           anchor.onTargetFound = () => {
             video.play();
+            gsap.to(plane.scale, { x: 1.5, y: 1.5, z: 1.5, duration: 1 }); // Scale up
           };
 
-          // Pause video when the marker is lost
+          // Pause video and scale down when the marker is lost
           anchor.onTargetLost = () => {
             video.pause();
+            gsap.to(plane.scale, { x: 1, y: 1, z: 1, duration: 1 }); // Scale back to original
           };
         });
 
-        // Start rendering the AR scene with the composer
+        // Start rendering the AR scene with post-processing effects
         renderer.setAnimationLoop(() => {
-          composer.render(); // Use composer to apply chromatic aberration
+          composer.render(); // Apply post-processing effects
         });
       }).catch(error => {
         console.error("Failed to start AR session:", error);
