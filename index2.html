@@ -60,7 +60,7 @@
       varying vec3 vNormal;
       void main() {
         float intensity = pow(0.9 - dot(vNormal, vec3(0.0, 0.0, 1.0)), 2.0);
-        vec4 texColor = texture(texture, vUv);  // Updated texture2D to texture
+        vec4 texColor = texture(uTexture, vUv);  // Updated texture2D to texture
         gl_FragColor = vec4(texColor.rgb + vec3(0.1, 0.5, 1.0) * intensity, texColor.a * 0.8);
       }
     `;
@@ -69,7 +69,7 @@
       vertexShader: vertexShader,
       fragmentShader: fragmentShader,
       uniforms: {
-        texture: { value: texture },
+        uTexture: { value: texture }, // Updated to use 'uTexture'
       },
       transparent: true,
     });
