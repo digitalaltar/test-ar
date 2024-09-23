@@ -59,7 +59,7 @@
     `
   };
 
-  // Function to create video plane at 1:1 scale
+  // Function to create video plane at 1:1 scale for AR
   function createVideoPlane(videoSrc, videoWidth, videoHeight, opacity) {
     const video = document.createElement('video');
     video.src = videoSrc;
@@ -98,7 +98,7 @@
       const videoRoot = jsonData.videoRoot;
       const mediaData = jsonData.media;
 
-      // Initialize a single MindARThree instance for the entire AR session
+      // Initialize a single MindARThree instance for the AR session
       const mindarThree = new MindARThree({
         container: document.querySelector("#mindar-container"),
         imageTargetSrc: mindFile
