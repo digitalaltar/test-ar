@@ -35,7 +35,8 @@
   const ChromaticAberrationShader = {
     uniforms: {
       tDiffuse: { value: null },
-      amount: { value: 0.05 }, // Increase the amount for a stronger shift
+      amount: { value: 0.1 }, // Control the strength of the shift
+      time: { value: 0 } // Time for animation
     },
     vertexShader: `
       varying vec2 vUv;
@@ -47,14 +48,20 @@
     fragmentShader: `
       uniform sampler2D tDiffuse;
       uniform float amount;
+      uniform float time;
       varying vec2 vUv;
 
       void main() {
-        vec2 offset = amount * vec2(vUv.y - 0.5, vUv.x - 0.5);
-        vec4 cr = texture2D(tDiffuse, vUv + offset * 2.0); // Stronger red shift
-        vec4 cga = texture2D(tDiffuse, vUv);
-        vec4 cb = texture2D(tDiffuse, vUv - offset * 2.0); // Stronger blue shift
-        gl_FragColor = vec4(cr.r, cga.g, cb.b, cga.a); // Preserve alpha
+        // Circular motion offsets
+        vec2 redOffset = amount * vec2(sin(time), cos(time));
+        vec2 greenOffset = amount * vec2(sin(time + 2.0), cos(time + 2.0));
+        vec2 blueOffset = amount * vec2(sin(time + 4.0), cos(time + 4.0));
+
+        vec4 cr = texture2D(tDiffuse, vUv + redOffset * 0.01);
+        vec4 cga = texture2D(tDiffuse, vUv + greenOffset * 0.01);
+        vec4 cb = texture2D(tDiffuse, vUv + blueOffset * 0.01);
+
+        gl_FragColor = vec4(cr.r, cga.g, cb.b, cga.a);
       }
     `
   };
@@ -166,9 +173,13 @@
           };
         });
 
+        // Animate the shader's time uniform
+        const clock = new THREE.Clock();
+                
         // Start rendering the AR scene with post-processing effects
         renderer.setAnimationLoop(() => {
-          composer.render(); // Apply post-processing effects globally
+          chromaticAberrationPass.uniforms['time'].value = clock.getElapsedTime(); // Update time uniform
+          composer.render(); // Apply post-processing effects
         });
       }).catch(error => {
         console.error("Failed to start AR session:", error);
