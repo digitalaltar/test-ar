@@ -137,7 +137,7 @@
         const { renderer, scene, camera } = mindarThree;
 
         // Add lighting to the scene
-        const ambientLight = new THREE.AmbientLight(0x404040);
+        const ambientLight = new THREE.AmbientLight(0xffffff, 2); // Increased intensity
         scene.add(ambientLight);
 
         const pointLight = new THREE.PointLight(0xffffff, 1, 100);
@@ -153,8 +153,8 @@
         composer.addPass(chromaticAberrationPass);
 
         const bokehPass = new BokehPass(scene, camera, {
-          focus: 1.0, // Adjust focus distance
-          aperture: 0.025, // Adjust aperture for blurring effect
+          focus: 2.0, // Adjust focus distance
+          aperture: 0.001, // Adjust aperture for blurring effect
           maxblur: 0.01 // Max blur
         });
         composer.addPass(bokehPass);
