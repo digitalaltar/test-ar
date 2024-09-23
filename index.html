@@ -52,7 +52,7 @@
   }
 
   // Load the JSON file with video settings for each marker
-  fetch('media.json') // Update with your correct JSON file path
+  fetch('media.json') // Ensure the correct path to your JSON file
     .then(response => response.json())
     .then(jsonData => {
       const mindFile = jsonData.mindFile;  // Single combined .mind file

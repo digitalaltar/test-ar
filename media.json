@@ -1,5 +1,5 @@
 {
-  "mindFile": "targets.mind",  // Specify the combined .mind file here
+  "mindFile": "combined.mind",
   "videoRoot": "videos/",
   "media": [
     {
