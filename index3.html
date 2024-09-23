@@ -153,12 +153,6 @@
         pointLight.position.set(5, 5, 5);
         scene.add(pointLight);
 
-        const composer = new EffectComposer(renderer);
-        composer.addPass(new RenderPass(scene, camera));
-
-        const chromaticAberrationPass = new ShaderPass(ChromaticAberrationShader);
-        composer.addPass(chromaticAberrationPass);
-
         const clock = new THREE.Clock();
 
         mediaData.forEach((entry, index) => {
@@ -173,25 +167,33 @@
           const { plane, video } = createVideoPlane(videoSrc, videoWidth, videoHeight, opacity);
           anchor.group.add(plane);
 
-          anchor.onTargetFound = () => {
-            video.play();
-          };
+          const composer = new EffectComposer(renderer);
+          composer.addPass(new RenderPass(scene, camera));
+
+          // Apply chromatic aberration only if rgbShift is true
+          if (rgbShift) {
+            const chromaticAberrationPass = new ShaderPass(ChromaticAberrationShader);
+            composer.addPass(chromaticAberrationPass);
+
+            anchor.onTargetFound = () => {
+              video.play();
+              renderer.setAnimationLoop(() => {
+                chromaticAberrationPass.uniforms['time'].value = clock.getElapsedTime();
+                composer.render();
+              });
+            };
+          } else {
+            anchor.onTargetFound = () => {
+              video.play();
+              renderer.setAnimationLoop(() => {
+                composer.render();
+              });
+            };
+          }
 
           anchor.onTargetLost = () => {
             video.pause();
           };
-
-          // Conditionally update the time for chromatic aberration based on the JSON value
-          if (rgbShift) {
-            renderer.setAnimationLoop(() => {
-              chromaticAberrationPass.uniforms['time'].value = clock.getElapsedTime();
-              composer.render();
-            });
-          } else {
-            renderer.setAnimationLoop(() => {
-              composer.render();
-            });
-          }
         });
       }).catch(error => {
         console.error("Failed to start AR session:", error);
