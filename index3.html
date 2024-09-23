@@ -153,47 +153,40 @@
         pointLight.position.set(5, 5, 5);
         scene.add(pointLight);
 
-        const clock = new THREE.Clock();
+        const composer = new EffectComposer(renderer);
+        composer.addPass(new RenderPass(scene, camera));
+
+        const chromaticAberrationPass = new ShaderPass(ChromaticAberrationShader);
+        composer.addPass(chromaticAberrationPass);
 
         mediaData.forEach((entry, index) => {
           const videoSrc = videoRoot + entry.video;
           const videoWidth = entry.width;
           const videoHeight = entry.height;
           const opacity = entry.opacity;
-          const rgbShift = entry.rgbShift; // Check if rgbShift is enabled
+          const rgbShiftIntensity = entry.rgbShiftIntensity !== undefined ? entry.rgbShiftIntensity : 0; // Default to no shift if undefined
 
           const anchor = mindarThree.addAnchor(index);
 
           const { plane, video } = createVideoPlane(videoSrc, videoWidth, videoHeight, opacity);
           anchor.group.add(plane);
 
-          const composer = new EffectComposer(renderer);
-          composer.addPass(new RenderPass(scene, camera));
-
-          // Apply chromatic aberration only if rgbShift is true
-          if (rgbShift) {
-            const chromaticAberrationPass = new ShaderPass(ChromaticAberrationShader);
-            composer.addPass(chromaticAberrationPass);
-
-            anchor.onTargetFound = () => {
-              video.play();
-              renderer.setAnimationLoop(() => {
-                chromaticAberrationPass.uniforms['time'].value = clock.getElapsedTime();
-                composer.render();
-              });
-            };
-          } else {
-            anchor.onTargetFound = () => {
-              video.play();
-              renderer.setAnimationLoop(() => {
-                composer.render();
-              });
-            };
-          }
+          anchor.onTargetFound = () => {
+            video.play();
+            chromaticAberrationPass.uniforms['amount'].value = rgbShiftIntensity; // Apply intensity
+          };
 
           anchor.onTargetLost = () => {
             video.pause();
+            chromaticAberrationPass.uniforms['amount'].value = 0; // Reset to no effect when video lost
           };
+        });
+
+        const clock = new THREE.Clock();
+
+        renderer.setAnimationLoop(() => {
+          chromaticAberrationPass.uniforms['time'].value = clock.getElapsedTime();
+          composer.render();
         });
       }).catch(error => {
         console.error("Failed to start AR session:", error);
